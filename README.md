@@ -71,7 +71,7 @@ npx --yes -- stable-diffusion-rest-api \
   --port 8888
 ```
 
-### Text prompt → Image
+### Text → Image
 
 (*`txt2img`*)
 
