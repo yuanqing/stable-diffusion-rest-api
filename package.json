@@ -32,6 +32,7 @@
     "clean": "rm -rf lib input.png output.png",
     "fix": "eslint --fix 'src/**/*.ts'",
     "lint": "eslint 'src/**/*.ts'",
+    "prepublishOnly": "npm run build",
     "reset": "rm -rf node_modules package-lock.json && npm install",
     "start": "node --loader ts-node/esm src/cli.js"
   },
