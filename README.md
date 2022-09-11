@@ -7,7 +7,7 @@
 - An M1/M2 MacBook
 - [Homebrew](https://brew.sh/)
 - [Python](https://formulae.brew.sh/formula/python@3.10) – v3.10
-- [Node.js](https://nodejs.org/) – v16
+- [Node.js](https://formulae.brew.sh/formula/node@16) – v16
 
 ## Initial setup
 
