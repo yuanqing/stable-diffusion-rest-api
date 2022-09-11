@@ -66,7 +66,9 @@ mkcert -cert-file cert.pem -key-file key.pem 0.0.0.0
 Start the API server:
 
 ```sh
-npx -- stable-diffusion-rest-api --port 8888
+npx --yes -- stable-diffusion-rest-api \
+  --model ./sd-v1-4.ckpt \
+  --port 8888
 ```
 
 ### Text prompt → Image
