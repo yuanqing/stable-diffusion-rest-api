@@ -67,8 +67,8 @@ Start the API server:
 
 ```sh
 npx --yes -- stable-diffusion-rest-api \
-  --cert ./cert \
-  --key ./key \
+  --cert ./cert.pem \
+  --key ./key.pem \
   --output ./output \
   --model ./sd-v1-4.ckpt \
   --port 8888
