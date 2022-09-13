@@ -54,7 +54,7 @@ Download [`sd-v1-4.ckpt`](https://huggingface.co/CompVis/stable-diffusion-v-1-4-
 mv ~/Downloads/sd-v1-4.ckpt ./
 ```
 
-Set up HTTPS:
+Generate a certificate and key to enable HTTPS:
 
 ```sh
 mkcert -install
@@ -67,6 +67,9 @@ Start the API server:
 
 ```sh
 npx --yes -- stable-diffusion-rest-api \
+  --cert ./cert \
+  --key ./key \
+  --output ./output \
   --model ./sd-v1-4.ckpt \
   --port 8888
 ```
