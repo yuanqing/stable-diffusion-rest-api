@@ -4,6 +4,7 @@ import fs from 'fs-extra'
 import https from 'https'
 import { yellow } from 'kleur/colors'
 import multer from 'multer'
+import { relative } from 'path'
 import tempDir from 'temp-dir'
 
 import { textToImageAsync } from './api/text-to-image-async.js'
@@ -57,7 +58,7 @@ export async function serveAsync(options: {
         seed: typeof seed === 'undefined' ? defaultSeed : parseInt(seed, 10),
         stableDiffusionDirectoryPath
       })
-      log.success(`Rendered to ${filePath}`)
+      log.success(`Rendered to ${yellow(relative(process.cwd(), filePath))}`)
       res.sendFile(filePath)
     }
   )
@@ -95,7 +96,7 @@ export async function serveAsync(options: {
         seed: typeof seed === 'undefined' ? defaultSeed : parseInt(seed, 10),
         stableDiffusionDirectoryPath
       })
-      log.success(`Rendered to ${filePath}`)
+      log.success(`Rendered to ${yellow(relative(process.cwd(), filePath))}`)
       res.sendFile(filePath)
     }
   )
@@ -110,7 +111,7 @@ export async function serveAsync(options: {
     )
     .listen(port, function () {
       log.clearViewport()
-      log.success(`Serving on https://0.0.0.0:${port}/`)
+      log.success(`Serving on ${yellow(`https://0.0.0.0:${port}/`)}`)
     })
   server.on('error', function (error: Error) {
     log.error(error.message)
