@@ -82,7 +82,7 @@ npx --yes -- stable-diffusion-rest-api \
 
 ```sh
 curl https://0.0.0.0:8888/text \
-  --form prompt="A digital painting of a beautiful mountain landscape" \
+  --form prompt="A digital illustration of a dystopian landscape, thom tenerys, cyberpunk, epic composition, 4k, detailed, trending on artstation, fantasy vivid colors" \
   --form seed="42" \
   --header "Content-Type: multipart/form-data" \
   --output output.png  \
@@ -98,7 +98,7 @@ curl https://0.0.0.0:8888/text \
 ```sh
 curl https://0.0.0.0:8888/text-with-image \
   --form image=@./input.png \
-  --form prompt="A digital painting of a beautiful mountain landscape" \
+  --form prompt="A digital illustration of a dystopian landscape, thom tenerys, cyberpunk, epic composition, 4k, detailed, trending on artstation, fantasy vivid colors" \
   --form seed="42" \
   --header "Content-Type: multipart/form-data" \
   --output output.png \
