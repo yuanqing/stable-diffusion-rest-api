@@ -1,14 +1,20 @@
 import cors from 'cors'
 import express from 'express'
 import fs from 'fs-extra'
+import { globby } from 'globby'
 import https from 'https'
 import { yellow } from 'kleur/colors'
 import multer from 'multer'
-import { relative } from 'path'
+import { join } from 'path'
 import tempDir from 'temp-dir'
 
 import { textToImageAsync } from './api/text-to-image-async.js'
 import { textWithImageToImageAsync } from './api/text-with-image-to-image-async.js'
+import {
+  DEFAULT_DDIM_STEPS,
+  DEFAULT_ITERATIONS,
+  DEFAULT_SEED
+} from './utilities/constants.js'
 import { log } from './utilities/log.js'
 
 export async function serveAsync(options: {
@@ -17,12 +23,10 @@ export async function serveAsync(options: {
   modelFilePath: string
   outputDirectoryPath: string
   port: number
-  defaultSeed: number
   stableDiffusionDirectoryPath: string
 }): Promise<void> {
   const {
     certFilePath,
-    defaultSeed,
     keyFilePath,
     modelFilePath,
     outputDirectoryPath,
@@ -36,12 +40,16 @@ export async function serveAsync(options: {
   app.use(express.json())
   app.use(express.urlencoded({ extended: true }))
 
+  app.use('/output', express.static(outputDirectoryPath))
+
   app.post(
     '/text',
     multer().none(),
     async function (
       req: {
         body: {
+          ddimSteps?: string
+          iterations?: string
           prompt: string
           seed?: string
         }
@@ -49,17 +57,31 @@ export async function serveAsync(options: {
       },
       res
     ): Promise<void> {
-      const { prompt, seed } = req.body
+      const { ddimSteps, iterations, prompt, seed } = req.body
       log.info(`${yellow(req.path)} "${prompt}"...`)
-      const filePath = await textToImageAsync({
+      const id = await textToImageAsync({
+        ddimSteps:
+          typeof ddimSteps === 'undefined'
+            ? DEFAULT_DDIM_STEPS
+            : parseInt(ddimSteps, 10),
+        iterations:
+          typeof iterations === 'undefined'
+            ? DEFAULT_ITERATIONS
+            : parseInt(iterations, 10),
         modelFilePath,
         outputDirectoryPath,
         prompt,
-        seed: typeof seed === 'undefined' ? defaultSeed : parseInt(seed, 10),
+        seed: typeof seed === 'undefined' ? DEFAULT_SEED : parseInt(seed, 10),
         stableDiffusionDirectoryPath
       })
-      log.success(`Rendered to ${yellow(relative(process.cwd(), filePath))}`)
-      res.sendFile(filePath)
+      const directory = join(outputDirectoryPath, id)
+      log.success(`Rendered to ${yellow(directory)}`)
+      const imageFiles = (await globby(`${directory}/*.png`)).map(function (
+        file: string
+      ) {
+        return `/${file}`
+      })
+      res.json(imageFiles)
     }
   )
 
@@ -69,6 +91,8 @@ export async function serveAsync(options: {
     async function (
       req: {
         body: {
+          ddimSteps?: string
+          iterations?: string
           prompt: string
           seed?: string
         }
@@ -86,18 +110,32 @@ export async function serveAsync(options: {
       }
       const inputImageFilePath = `${req.file.path}.${imageFileType}`
       await fs.move(req.file.path, inputImageFilePath)
-      const { prompt, seed } = req.body
-      log.info(`${yellow(req.path)} "${prompt}"...`)
-      const filePath = await textWithImageToImageAsync({
+      const { ddimSteps, iterations, prompt, seed } = req.body
+      log.info(`${yellow(req.path)} "${prompt}"`)
+      const id = await textWithImageToImageAsync({
+        ddimSteps:
+          typeof ddimSteps === 'undefined'
+            ? DEFAULT_DDIM_STEPS
+            : parseInt(ddimSteps, 10),
         inputImageFilePath,
+        iterations:
+          typeof iterations === 'undefined'
+            ? DEFAULT_ITERATIONS
+            : parseInt(iterations, 10),
         modelFilePath,
         outputDirectoryPath,
         prompt,
-        seed: typeof seed === 'undefined' ? defaultSeed : parseInt(seed, 10),
+        seed: typeof seed === 'undefined' ? DEFAULT_SEED : parseInt(seed, 10),
         stableDiffusionDirectoryPath
       })
-      log.success(`Rendered to ${yellow(relative(process.cwd(), filePath))}`)
-      res.sendFile(filePath)
+      const directory = join(outputDirectoryPath, id)
+      log.success(`Rendered to ${yellow(directory)}`)
+      const imageFiles = (await globby(`${directory}/*.png`)).map(function (
+        file: string
+      ) {
+        return `/${file}`
+      })
+      res.json(imageFiles)
     }
   )
 

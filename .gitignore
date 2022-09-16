@@ -9,3 +9,4 @@ lib/
 node_modules/
 output/
 stable-diffusion/
+output.json

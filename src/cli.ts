@@ -9,9 +9,8 @@ sade('stable-diffusion-rest-api', true)
   .option('-m, --model', 'Path to the Stable Diffusion model', './model.ckpt')
   .option('-o, --output', 'Directory to output generated images', './output')
   .option('-p, --port', 'Port to serve the REST API', 8888)
-  .option('-s, --seed', 'Default seed', 42)
   .option(
-    '-sd, --stable-diffusion-repository',
+    '-s, --stable-diffusion-repository',
     'Path to the Stable Diffusion repository',
     './stable-diffusion'
   )
@@ -21,18 +20,16 @@ sade('stable-diffusion-rest-api', true)
     model: string
     output: string
     port: number
-    seed: number
-    sd: string
+    s: string
   }) {
-    const { cert, key, model, output, port, seed, sd } = options
+    const { cert, key, model, output, port, s } = options
     await serveAsync({
       certFilePath: cert,
-      defaultSeed: seed,
       keyFilePath: key,
       modelFilePath: model,
       outputDirectoryPath: output,
       port,
-      stableDiffusionDirectoryPath: sd
+      stableDiffusionDirectoryPath: s
     })
   })
   .parse(process.argv)

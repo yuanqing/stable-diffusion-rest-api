@@ -6,7 +6,9 @@ import { createId } from '../utilities/create-id.js'
 import { executeShellCommandAsync } from '../utilities/execute-shell-command-async.js'
 
 export async function textWithImageToImageAsync(options: {
+  ddimSteps: number
   inputImageFilePath: string
+  iterations: number
   modelFilePath: string
   outputDirectoryPath: string
   prompt: string
@@ -14,10 +16,12 @@ export async function textWithImageToImageAsync(options: {
   stableDiffusionDirectoryPath: string
 }): Promise<string> {
   const {
+    ddimSteps,
     inputImageFilePath,
+    iterations,
     modelFilePath,
-    prompt,
     outputDirectoryPath,
+    prompt,
     seed,
     stableDiffusionDirectoryPath
   } = options
@@ -30,7 +34,7 @@ export async function textWithImageToImageAsync(options: {
   const tempOutputDirectory = join(tempDir, id)
   await ensureDir(tempOutputDirectory)
 
-  const command = `cd ${stableDiffusionAbsolutePath} && VIRTUAL_ENV="${venvDirectoryAbsolutePath}" PATH="$VIRTUAL_ENV/bin:$PATH" python scripts/img2img.py --ckpt "${modelAbsolutePath}" --init-img "${inputImageFilePath}" --n_samples 1 --n_iter 1 --outdir "${tempOutputDirectory}" --prompt "${prompt}" --seed ${seed} --skip_grid`
+  const command = `cd ${stableDiffusionAbsolutePath} && VIRTUAL_ENV="${venvDirectoryAbsolutePath}" PATH="$VIRTUAL_ENV/bin:$PATH" python scripts/img2img.py --ckpt "${modelAbsolutePath}" --ddim_steps ${ddimSteps} --init-img "${inputImageFilePath}" --n_iter ${iterations} --n_samples 1 --outdir "${tempOutputDirectory}" --prompt "${prompt}" --seed ${seed} --skip_grid --W 512 --H 512`
   await executeShellCommandAsync(command)
 
   const outputImageFilePath = join(resolve(outputDirectoryPath), `${id}.png`)
