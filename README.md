@@ -26,7 +26,7 @@ Install Homebrew dependencies:
 brew install cmake mkcert protobuf rust
 ```
 
-Clone the Stable Diffusion fork:
+Clone the [Stable Diffusion fork](https://github.com/bfirsh/stable-diffusion):
 
 ```sh
 git clone -b apple-silicon-mps-support https://github.com/bfirsh/stable-diffusion.git
