@@ -1,7 +1,7 @@
 {
   "name": "stable-diffusion-rest-api",
   "version": "0.0.3",
-  "description": "A CLI for running Stable Diffusion locally via a REST API on an M1/M2 MacBook",
+  "description": "Run Stable Diffusion locally via a REST API on an M1/M2 MacBook",
   "keywords": [
     "ai",
     "api",
