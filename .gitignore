@@ -5,8 +5,9 @@
 *.pem
 *.png
 *.tsbuildinfo
+__pycache__/
+database/
 lib/
 node_modules/
 output/
 stable-diffusion/
-output.json

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+  :root { color-scheme: light dark; }
+  * { font: 20px/24px monospace; }
+  img, input, label, textarea { display: block; }
+  img { float: left; margin: 0 10px 10px 0; }
+  textarea { width: 100%; }
+</style>
+<body>
+  <form>
+    <textarea name="prompt" rows="5" required="required">A digital illustration of a beautiful mountain landscape, detailed, thom tenerys, epic composition, 4k, trending on artstation, fantasy vivid colors</textarea>
+    <input type="hidden" name="ddimSteps" value="8">
+    <input type="hidden" name="iterations" value="3">
+    <input type="hidden" name="seed" value="42">
+    <input type="submit" value="Generate Image">
+  </form>
+  <div class="results"></div>
+  <script>
+    const BASE_URL = 'https://0.0.0.0:8888'
+
+    const formElement = document.querySelector('form')
+    const progressElement = document.querySelector('.progress')
+    const resultsElement = document.querySelector('.results')
+
+    async function handleFormSubmit (event) {
+      event.submitter.setAttribute('disabled', true)
+      resultsElement.innerHTML = ''
+      event.preventDefault()
+      const formData  = new FormData(event.target)
+      const response = await fetch(`${BASE_URL}/text-to-image`, {
+        method: 'POST',
+        body: formData
+      })
+      const { resultEndpoint } = await response.json()
+      const renderedImageUrls = {}
+      const intervalId = setInterval(async function callback () {
+        const response = await fetch(`${BASE_URL}${resultEndpoint}`, {
+          method: 'GET'
+        })
+        const { images, status } = await response.json()
+        for (const { progress, url } of images) {
+          if (progress === 1 && renderedImageUrls[url] !== true) {
+            createImageElementAsync(`${BASE_URL}${url}`, resultsElement)
+            renderedImageUrls[url] = true
+          }
+        }
+        if (status === 'COMPLETE') {
+          clearInterval(intervalId)
+          event.submitter.removeAttribute('disabled')
+        }
+      }, 1000)
+    }
+    formElement.addEventListener('submit', handleFormSubmit)
+
+    async function createImageElementAsync(url, parentElement) {
+      return new Promise(function (resolve, reject) {
+        const imageElement = new Image()
+        imageElement.onload = function () {
+          imageElement.setAttribute('width', '256px')
+          parentElement.appendChild(imageElement)
+          resolve()
+        }
+        imageElement.onerror = reject
+        imageElement.src = url
+      })
+    }
+  </script>
+</body>
+</html>

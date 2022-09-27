@@ -32,12 +32,6 @@ Clone the [Stable Diffusion fork](https://github.com/bfirsh/stable-diffusion):
 git clone -b apple-silicon-mps-support https://github.com/bfirsh/stable-diffusion.git
 ```
 
-Add the following line to the `stable-diffusion/scripts/img2img.py` file, right before the `from ldm.util import instantiate_from_config` line:
-
-```py
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-```
-
 Set up a `virtualenv` and install dependencies:
 
 ```sh
@@ -76,35 +70,37 @@ npx --yes -- stable-diffusion-rest-api \
 
 ### Text → Image
 
-(*`txt2img`*)
-
-**`POST`** **`/text`**
+**`POST`** **`/text-to-image`**
 
 ```sh
-curl https://0.0.0.0:8888/text \
+curl https://0.0.0.0:8888/text-to-image \
   --form ddimSteps="8" \
-  --form iterations="1" \
-  --form prompt="A digital illustration of a dystopian landscape, thom tenerys, cyberpunk, epic composition, 4k, detailed, trending on artstation, fantasy vivid colors" \
+  --form iterations="2" \
+  --form prompt="A digital illustration of a beautiful mountain landscape, detailed, thom tenerys, epic composition, 4k, trending on artstation, fantasy vivid colors" \
   --form seed="42" \
   --header "Content-Type: multipart/form-data" \
-  --output output.json \
-  --request POST
+  --location
 ```
 
-### Text + Image → Image
+```sh
+curl https://0.0.0.0:8888/text-to-image/<ID>
+```
 
-(*`img2img`*)
+### Image (+ Text) → Image
 
-**`POST`** **`/text-with-image`**
+**`POST`** **`/image-to-image`**
 
 ```sh
-curl https://0.0.0.0:8888/text-with-image \
-  --form ddimSteps="8" \
-  --form iterations="1" \
-  --form image=@./input.png \
-  --form prompt="A digital illustration of a dystopian landscape, thom tenerys, cyberpunk, epic composition, 4k, detailed, trending on artstation, fantasy vivid colors" \
+curl https://0.0.0.0:8888/image-to-image \
+  --form ddimSteps="24" \
+  --form iterations="2" \
+  --form image=@./image.png \
+  --form prompt="A digital illustration of a beautiful mountain landscape, detailed, thom tenerys, epic composition, 4k, trending on artstation, fantasy vivid colors" \
   --form seed="42" \
   --header "Content-Type: multipart/form-data" \
-  --output output.json \
-  --request POST
+  --location
+```
+
+```sh
+curl https://0.0.0.0:8888/image-to-image/<ID>
 ```
