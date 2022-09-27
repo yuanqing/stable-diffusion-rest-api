@@ -42,7 +42,7 @@ pip install -r requirements.txt
 cd ..
 ```
 
-Download [`sd-v1-4.ckpt`](https://huggingface.co/CompVis/stable-diffusion-v-1-4-original), and move it to the current working directory:
+Download [`sd-v1-4.ckpt`](https://huggingface.co/CompVis/stable-diffusion-v-1-4-original) from Hugging Face, and move it to the current working directory:
 
 ```sh
 mv ~/Downloads/sd-v1-4.ckpt ./
@@ -68,7 +68,7 @@ npx --yes -- stable-diffusion-rest-api \
   --port 8888
 ```
 
-### Text → Image
+### Text to Image
 
 **`POST`** **`/text-to-image`**
 
@@ -82,11 +82,13 @@ curl https://0.0.0.0:8888/text-to-image \
   --location
 ```
 
+**`GET`** **`/text-to-image/<ID>`**
+
 ```sh
 curl https://0.0.0.0:8888/text-to-image/<ID>
 ```
 
-### Image (+ Text) → Image
+### Image to Image
 
 **`POST`** **`/image-to-image`**
 
@@ -100,6 +102,8 @@ curl https://0.0.0.0:8888/image-to-image \
   --header "Content-Type: multipart/form-data" \
   --location
 ```
+
+**`GET`** **`/image-to-image/<ID>`**
 
 ```sh
 curl https://0.0.0.0:8888/image-to-image/<ID>
