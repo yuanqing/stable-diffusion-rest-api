@@ -19,14 +19,12 @@ export function textToImage(
 ): EventEmitter {
   const parsedOptions = parseTextToImageOptions(options)
   const {
-    configFilePath,
     modelFilePath,
     outputDirectoryPath,
     stableDiffusionRepositoryDirectoryPath,
     ...scriptArgs
   } = parsedOptions
   return executeStableDiffusionScript({
-    configFilePath,
     modelFilePath,
     outputDirectoryPath,
     scriptArgs: {
@@ -44,10 +42,6 @@ function parseTextToImageOptions(
   return {
     batchSize: typeof options.batchSize === 'undefined' ? 1 : options.batchSize,
     channels: typeof options.channels === 'undefined' ? 4 : options.channels,
-    configFilePath:
-      typeof options.configFilePath === 'undefined'
-        ? './stable-diffusion/configs/stable-diffusion/v1-inference.yaml'
-        : options.configFilePath,
     ddimEta: typeof options.ddimEta === 'undefined' ? 0 : options.ddimEta,
     ddimSteps: typeof options.ddimSteps === 'undefined' ? 8 : options.ddimSteps,
     downsamplingFactor:

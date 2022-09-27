@@ -21,7 +21,8 @@ def image_to_image(options):
     pytorch_lightning.seed_everything(options.seed)
 
     device = torch.device("mps")
-    config = omegaconf.OmegaConf.load(options.config)
+    config = omegaconf.OmegaConf.load(
+        'configs/stable-diffusion/v1-inference.yaml')
     model = utilities.load_model(
         config=config, file_path=options.model).to(device)
 
@@ -76,7 +77,6 @@ def image_to_image(options):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch_size", type=int, required=True)
-    parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--ddim_eta", type=float, required=True)
     parser.add_argument("--ddim_steps", type=int, required=True)
     parser.add_argument("--guidance_scale", type=float, required=True)

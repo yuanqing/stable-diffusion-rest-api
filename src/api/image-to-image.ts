@@ -20,14 +20,12 @@ export function imageToImage(
 ): EventEmitter {
   const parsedOptions = parseImageToImageOptions(options)
   const {
-    configFilePath,
     modelFilePath,
     outputDirectoryPath,
     stableDiffusionRepositoryDirectoryPath,
     ...scriptArgs
   } = parsedOptions
   return executeStableDiffusionScript({
-    configFilePath,
     modelFilePath,
     outputDirectoryPath,
     scriptArgs: {
@@ -45,10 +43,6 @@ function parseImageToImageOptions(
 ): Required<ImageToImageOptions> {
   return {
     batchSize: typeof options.batchSize === 'undefined' ? 1 : options.batchSize,
-    configFilePath:
-      typeof options.configFilePath === 'undefined'
-        ? './stable-diffusion/configs/stable-diffusion/v1-inference.yaml'
-        : options.configFilePath,
     ddimEta: typeof options.ddimEta === 'undefined' ? 0 : options.ddimEta,
     ddimSteps:
       typeof options.ddimSteps === 'undefined' ? 24 : options.ddimSteps,

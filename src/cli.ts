@@ -6,11 +6,6 @@ import { serveAsync } from './utilities/serve-async.js'
 sade('stable-diffusion-rest-api', true)
   .option('--cert', 'Path to the SSL certicate', './cert.pem')
   .option(
-    '--config',
-    'Path to the Stable Diffusion config',
-    './stable-diffusion/configs/stable-diffusion/v1-inference.yaml'
-  )
-  .option(
     '--delete-incomplete',
     'Delete all incomplete image generation tasks',
     false
@@ -26,7 +21,6 @@ sade('stable-diffusion-rest-api', true)
   )
   .action(async function (options: {
     'cert': string
-    'config': string
     'delete-incomplete': boolean
     'key': string
     'model': string
@@ -36,7 +30,6 @@ sade('stable-diffusion-rest-api', true)
   }) {
     await serveAsync({
       certFilePath: options.cert,
-      configFilePath: options.config,
       deleteIncomplete: options['delete-incomplete'],
       keyFilePath: options.key,
       modelFilePath: options.model,

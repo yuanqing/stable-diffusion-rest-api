@@ -6,7 +6,6 @@ export type Progress = {
 
 type BaseOptions = {
   batchSize?: number
-  configFilePath?: string
   ddimEta?: number
   ddimSteps?: number
   guidanceScale?: number

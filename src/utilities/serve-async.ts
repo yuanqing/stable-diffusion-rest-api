@@ -17,7 +17,6 @@ import { createStatusDatabase } from './create-status-database.js'
 import { log } from './log.js'
 
 export type ConfigOptions =
-  | 'configFilePath'
   | 'databaseDirectoryPath'
   | 'modelFilePath'
   | 'outputDirectoryPath'
@@ -25,7 +24,6 @@ export type ConfigOptions =
 
 export async function serveAsync(options: {
   certFilePath: string
-  configFilePath: string
   deleteIncomplete: boolean
   keyFilePath: string
   modelFilePath: string
@@ -35,7 +33,6 @@ export async function serveAsync(options: {
 }): Promise<void> {
   const {
     certFilePath,
-    configFilePath,
     deleteIncomplete,
     keyFilePath,
     modelFilePath,
@@ -58,7 +55,6 @@ export async function serveAsync(options: {
     execute: (id: string) => EventEmitter
   ): Promise<void> {
     const id = createId({
-      configFilePath,
       modelFilePath,
       stableDiffusionRepositoryDirectoryPath,
       ...req.body
@@ -119,7 +115,6 @@ export async function serveAsync(options: {
       await run(req, res, function (id: string): EventEmitter {
         const { prompt, ...rest } = req.body
         return textToImage(prompt, {
-          configFilePath,
           modelFilePath,
           outputDirectoryPath: join(outputDirectoryPath, req.path, id),
           stableDiffusionRepositoryDirectoryPath,
@@ -152,7 +147,6 @@ export async function serveAsync(options: {
       await run(req, res, function (id: string): EventEmitter {
         const { prompt, ...rest } = req.body
         return imageToImage(prompt, inputImageFilePath, {
-          configFilePath,
           modelFilePath,
           outputDirectoryPath: join(outputDirectoryPath, req.path, id),
           stableDiffusionRepositoryDirectoryPath,

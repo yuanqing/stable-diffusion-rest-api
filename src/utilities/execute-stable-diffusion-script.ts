@@ -12,7 +12,6 @@ const POLL_INTERVAL = 200
 const ITERATION_PREFIX_REGEX = /Sampling:/
 
 export function executeStableDiffusionScript(options: {
-  configFilePath: string
   modelFilePath: string
   outputDirectoryPath: string
   scriptArgs: Record<string, boolean | string | number>
@@ -20,7 +19,6 @@ export function executeStableDiffusionScript(options: {
   stableDiffusionRepositoryDirectoryPath: string
 }): EventEmitter {
   const {
-    configFilePath,
     modelFilePath,
     outputDirectoryPath,
     scriptArgs,
@@ -36,7 +34,6 @@ export function executeStableDiffusionScript(options: {
     stableDiffusionRepositoryDirectoryAbsolutePath,
     'venv'
   )
-  const configFileAbsolutePath = resolve(configFilePath)
   const modelFileAbsolutePath = resolve(modelFilePath)
 
   const eventEmitter = new EventEmitter()
@@ -48,7 +45,6 @@ export function executeStableDiffusionScript(options: {
   python '${scriptFilePath}' \
   ${createScriptArgs({
     ...scriptArgs,
-    config: configFileAbsolutePath,
     model: modelFileAbsolutePath,
     output: outputDirectoryAbsolutePath
   })}`
