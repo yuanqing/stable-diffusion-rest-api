@@ -12,36 +12,39 @@ import tqdm
 import ldm.models.diffusion.ddim
 import utilities
 
-PREFIX = "Sampling"
+
+CONFIG_FILE = "configs/stable-diffusion/v1-inference.yaml"
+DEVICE = "mps"
+LOG_PREFIX = "Sampling"
 
 
 def image_to_image(options):
-    os.makedirs(options.output, exist_ok=True)
+    os.makedirs(options.output_directory_path, exist_ok=True)
 
-    pytorch_lightning.seed_everything(options.seed)
+    if (options.seed != None):
+        pytorch_lightning.seed_everything(options.seed)
 
-    device = torch.device("mps")
-    config = omegaconf.OmegaConf.load(
-        'configs/stable-diffusion/v1-inference.yaml')
+    device = torch.device(DEVICE)
+    config = omegaconf.OmegaConf.load(CONFIG_FILE)
     model = utilities.load_model(
-        config=config, file_path=options.model).to(device)
-
-    image = utilities.load_image(file_path=options.image).to(device)
-    image = einops.repeat(image, "1 ... -> b ...", b=options.batch_size)
-
-    x0 = model.get_first_stage_encoding(model.encode_first_stage(image))
-    t_start = int(options.strength * options.ddim_steps)
+        config=config, file=options.model_file_path).to(device)
 
     sampler = ldm.models.diffusion.ddim.DDIMSampler(model)
     sampler.make_schedule(
-        ddim_eta=options.ddim_eta, ddim_num_steps=options.ddim_steps, verbose=False
+        ddim_eta=options.eta, ddim_num_steps=options.steps, verbose=False
     )
+
+    image = utilities.load_image(file=options.image_file_path).to(device)
+    image = einops.repeat(image, "1 ... -> b ...", b=options.batch_size)
+
+    x0 = model.get_first_stage_encoding(model.encode_first_stage(image))
+    t_start = int(options.strength * options.steps)
 
     count = 1
     with torch.no_grad():
         with contextlib.nullcontext(device.type):
             with model.ema_scope():
-                for _ in tqdm.trange(options.iterations, desc=PREFIX):
+                for _ in tqdm.trange(options.iterations, desc=LOG_PREFIX):
                     conditioning = model.get_learned_conditioning(
                         options.batch_size * [options.prompt]
                     )
@@ -70,22 +73,22 @@ def image_to_image(options):
                         )
                         image = PIL.Image.fromarray(sample.astype(numpy.uint8))
                         image.save(os.path.join(
-                            options.output, f"{count}.png"))
+                            options.output_directory_path, f"{count}.png"))
                         count += 1
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch_size", type=int, required=True)
-    parser.add_argument("--ddim_eta", type=float, required=True)
-    parser.add_argument("--ddim_steps", type=int, required=True)
+    parser.add_argument("--eta", type=float, required=True)
     parser.add_argument("--guidance_scale", type=float, required=True)
-    parser.add_argument("--image", type=str, required=True)
+    parser.add_argument("--image_file_path", type=str, required=True)
     parser.add_argument("--iterations", type=int, required=True)
-    parser.add_argument("--model", type=str, required=True)
-    parser.add_argument("--output", type=str, required=True)
+    parser.add_argument("--model_file_path", type=str, required=True)
+    parser.add_argument("--output_directory_path", type=str, required=True)
     parser.add_argument("--prompt", type=str, required=True)
-    parser.add_argument("--seed", type=int, required=True)
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--steps", type=int, required=True)
     parser.add_argument("--strength", type=float, required=True)
     options = parser.parse_args()
     image_to_image(options)

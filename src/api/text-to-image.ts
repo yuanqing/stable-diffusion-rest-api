@@ -42,12 +42,11 @@ function parseTextToImageOptions(
   return {
     batchSize: typeof options.batchSize === 'undefined' ? 1 : options.batchSize,
     channels: typeof options.channels === 'undefined' ? 4 : options.channels,
-    ddimEta: typeof options.ddimEta === 'undefined' ? 0 : options.ddimEta,
-    ddimSteps: typeof options.ddimSteps === 'undefined' ? 8 : options.ddimSteps,
     downsamplingFactor:
       typeof options.downsamplingFactor === 'undefined'
         ? 8
         : options.downsamplingFactor,
+    eta: typeof options.eta === 'undefined' ? 0 : options.eta,
     guidanceScale:
       typeof options.guidanceScale === 'undefined'
         ? 7.5
@@ -63,12 +62,12 @@ function parseTextToImageOptions(
       typeof options.outputDirectoryPath === 'undefined'
         ? './output'
         : options.outputDirectoryPath,
-    sampler: typeof options.sampler === 'undefined' ? 'plms' : options.sampler,
     seed: typeof options.seed === 'undefined' ? 42 : options.seed,
     stableDiffusionRepositoryDirectoryPath:
       typeof options.stableDiffusionRepositoryDirectoryPath === 'undefined'
         ? './stable-diffusion'
         : options.stableDiffusionRepositoryDirectoryPath,
+    steps: typeof options.steps === 'undefined' ? 8 : options.steps,
     width: typeof options.width === 'undefined' ? 512 : options.width
   }
 }

@@ -3,7 +3,7 @@ import { Level } from 'level'
 import { Progress } from '../types'
 
 export type StatusDatabase = {
-  deleteAllIncompleteAsync: () => Promise<void>
+  deleteIncompleteAsync: () => Promise<void>
   getStatusAsync: (type: string, id: string) => Promise<null | Result>
   setStatusToQueuedAsync: (type: string, id: string) => Promise<void>
   setStatusToInProgressAsync: (
@@ -29,7 +29,7 @@ const levelDbOptions = { valueEncoding: 'json' }
 export function createStatusDatabase(directoryPath: string): StatusDatabase {
   const db = new Level(directoryPath)
 
-  async function deleteAllIncompleteAsync(): Promise<void> {
+  async function deleteIncompleteAsync(): Promise<void> {
     const deleteOperations: Array<{ type: 'del'; key: string }> = []
     for await (const [key, result] of db.iterator<string, Result>(
       levelDbOptions
@@ -106,7 +106,7 @@ export function createStatusDatabase(directoryPath: string): StatusDatabase {
   }
 
   return {
-    deleteAllIncompleteAsync,
+    deleteIncompleteAsync,
     getStatusAsync,
     setStatusToDoneAsync,
     setStatusToInProgressAsync,
@@ -115,5 +115,5 @@ export function createStatusDatabase(directoryPath: string): StatusDatabase {
 }
 
 function createKey(type: string, id: string) {
-  return `${type}-${id}`
+  return `${type}/${id}`
 }

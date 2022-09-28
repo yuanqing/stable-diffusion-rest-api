@@ -9,7 +9,7 @@ import { snakeCase } from 'snake-case'
 import { Progress } from '../types.js'
 
 const POLL_INTERVAL = 200
-const ITERATION_PREFIX_REGEX = /Sampling:/
+const LOG_PREFIX = /Sampling:/
 
 export function executeStableDiffusionScript(options: {
   modelFilePath: string
@@ -45,8 +45,8 @@ export function executeStableDiffusionScript(options: {
   python '${scriptFilePath}' \
   ${createScriptArgs({
     ...scriptArgs,
-    model: modelFileAbsolutePath,
-    output: outputDirectoryAbsolutePath
+    modelFilePath: modelFileAbsolutePath,
+    outputDirectoryPath: outputDirectoryAbsolutePath
   })}`
 
   const emitProgress = mem(
@@ -72,7 +72,7 @@ export function executeStableDiffusionScript(options: {
     const lines = data.toString().split('\n')
     for (const line of lines) {
       stderr.push(line)
-      if (ITERATION_PREFIX_REGEX.test(line) === true) {
+      if (LOG_PREFIX.test(line) === true) {
         const split = line.split('|')
         const matches = split[2].trim().match(/^(\d+)\/(\d+)/)
         if (matches === null) {

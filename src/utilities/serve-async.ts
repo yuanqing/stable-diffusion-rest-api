@@ -7,35 +7,43 @@ import { EventEmitter } from 'node:events'
 import https from 'node:https'
 import { join } from 'node:path'
 import tempDir from 'temp-dir'
-import { JsonObject } from 'type-fest'
 
 import { imageToImage } from '../api/image-to-image.js'
+import { inpaintImage } from '../api/inpaint-image.js'
 import { textToImage } from '../api/text-to-image.js'
-import { ImageToImageOptions, Progress, TextToImageOptions } from '../types.js'
+import {
+  ImageToImageOptions,
+  InpaintImageOptions,
+  Progress,
+  TextToImageOptions
+} from '../types.js'
+import { addImageFileExtensionAsync } from './add-image-file-extension-async.js'
 import { createId } from './create-id.js'
 import { createStatusDatabase } from './create-status-database.js'
 import { log } from './log.js'
 
 export type ConfigOptions =
-  | 'databaseDirectoryPath'
   | 'modelFilePath'
   | 'outputDirectoryPath'
+  | 'outputFilePath'
   | 'stableDiffusionRepositoryDirectoryPath'
 
 export async function serveAsync(options: {
   certFilePath: string
   deleteIncomplete: boolean
+  inpaintImageModelFilePath: string
   keyFilePath: string
-  modelFilePath: string
   outputDirectoryPath: string
   port: number
   stableDiffusionRepositoryDirectoryPath: string
+  textToImageModelFilePath: string
 }): Promise<void> {
   const {
     certFilePath,
     deleteIncomplete,
+    inpaintImageModelFilePath,
     keyFilePath,
-    modelFilePath,
+    textToImageModelFilePath,
     outputDirectoryPath,
     port,
     stableDiffusionRepositoryDirectoryPath
@@ -46,25 +54,22 @@ export async function serveAsync(options: {
   )
 
   if (deleteIncomplete === true) {
-    await statusDatabase.deleteAllIncompleteAsync()
+    await statusDatabase.deleteIncompleteAsync()
   }
 
-  async function run(
-    req: { body: { prompt: string } & JsonObject; path: string },
-    res: { redirect: (url: string) => void },
-    execute: (id: string) => EventEmitter
-  ): Promise<void> {
-    const id = createId({
-      modelFilePath,
-      stableDiffusionRepositoryDirectoryPath,
-      ...req.body
-    })
+  async function run(options: {
+    execute: () => EventEmitter
+    id: string
+    res: { redirect: (url: string) => void }
+    req: { path: string }
+  }): Promise<void> {
+    const { execute, id, res, req } = options
     const logPrefix = `${yellow(req.path)} ${gray(id)}`
     const result = await statusDatabase.getStatusAsync(req.path, id)
     if (result === null) {
       await statusDatabase.setStatusToQueuedAsync(req.path, id)
-      const eventEmitter = execute(id)
-      log.info(`${logPrefix} "${req.body.prompt}"`)
+      const eventEmitter = execute()
+      log.info(logPrefix)
       eventEmitter.on(
         'progress',
         async function (progress: Progress): Promise<void> {
@@ -100,9 +105,11 @@ export async function serveAsync(options: {
   app.use(express.json())
   app.use(express.urlencoded({ extended: true }))
 
+  const upload = multer({ dest: tempDir })
+
   app.post(
     '/text-to-image',
-    multer().none(),
+    upload.none(),
     async function (
       req: {
         body: { prompt: string } & Omit<TextToImageOptions, ConfigOptions>
@@ -112,21 +119,31 @@ export async function serveAsync(options: {
         redirect: (url: string) => void
       }
     ): Promise<void> {
-      await run(req, res, function (id: string): EventEmitter {
-        const { prompt, ...rest } = req.body
-        return textToImage(prompt, {
-          modelFilePath,
-          outputDirectoryPath: join(outputDirectoryPath, req.path, id),
-          stableDiffusionRepositoryDirectoryPath,
-          ...rest
-        })
+      const id = createId({
+        ...req.body,
+        modelFilePath: textToImageModelFilePath,
+        stableDiffusionRepositoryDirectoryPath
+      })
+      await run({
+        execute: function (): EventEmitter {
+          const { prompt, ...rest } = req.body
+          return textToImage(prompt, {
+            modelFilePath: textToImageModelFilePath,
+            outputDirectoryPath: join(outputDirectoryPath, req.path, id),
+            stableDiffusionRepositoryDirectoryPath,
+            ...rest
+          })
+        },
+        id: createId(req.body),
+        req,
+        res
       })
     }
   )
 
   app.post(
     '/image-to-image',
-    multer({ dest: tempDir }).single('image'),
+    upload.single('image'),
     async function (
       req: {
         body: { prompt: string } & Omit<ImageToImageOptions, ConfigOptions>
@@ -136,28 +153,80 @@ export async function serveAsync(options: {
       res
     ): Promise<void> {
       if (typeof req.file === 'undefined') {
-        throw new Error('Need an image')
+        throw new Error('Need an `image`')
       }
-      const imageFileType = parseImageFileType(req.file)
-      if (imageFileType === null) {
-        throw new Error('Invalid image type')
+      const imageFilePath = await addImageFileExtensionAsync(req.file)
+      const id = createId({
+        ...req.body,
+        imageFilePath,
+        modelFilePath: textToImageModelFilePath,
+        stableDiffusionRepositoryDirectoryPath
+      })
+      await run({
+        execute: function (): EventEmitter {
+          const { prompt, ...rest } = req.body
+          return imageToImage(prompt, imageFilePath, {
+            modelFilePath: textToImageModelFilePath,
+            outputDirectoryPath: join(outputDirectoryPath, req.path, id),
+            stableDiffusionRepositoryDirectoryPath,
+            ...rest
+          })
+        },
+        id,
+        req,
+        res
+      })
+    }
+  )
+
+  app.post(
+    '/inpaint-image',
+    upload.fields([
+      { maxCount: 1, name: 'image' },
+      { maxCount: 1, name: 'mask' }
+    ]),
+    async function (
+      req: {
+        body: Omit<InpaintImageOptions, ConfigOptions>
+        files?:
+          | Array<Express.Multer.File>
+          | Record<string, Array<Express.Multer.File>>
+        path: string
+      },
+      res: {
+        redirect: (url: string) => void
       }
-      const inputImageFilePath = `${req.file.path}.${imageFileType}`
-      await fs.move(req.file.path, inputImageFilePath)
-      await run(req, res, function (id: string): EventEmitter {
-        const { prompt, ...rest } = req.body
-        return imageToImage(prompt, inputImageFilePath, {
-          modelFilePath,
-          outputDirectoryPath: join(outputDirectoryPath, req.path, id),
-          stableDiffusionRepositoryDirectoryPath,
-          ...rest
-        })
+    ): Promise<void> {
+      if (typeof req.files === 'undefined' || Array.isArray(req.files)) {
+        throw new Error('Need an `image` and a `mask`')
+      }
+      const { image, mask } = req.files
+      const imageFilePath = await addImageFileExtensionAsync(image[0])
+      const maskFilePath = await addImageFileExtensionAsync(mask[0])
+      const id = createId({
+        ...req.body,
+        imageFilePath,
+        maskFilePath,
+        modelFilePath: inpaintImageModelFilePath
+      })
+      await run({
+        execute: function (): EventEmitter {
+          return inpaintImage(imageFilePath, maskFilePath, {
+            modelFilePath: inpaintImageModelFilePath,
+            outputDirectoryPath: join(outputDirectoryPath, req.path, id),
+            stableDiffusionRepositoryDirectoryPath,
+            ...req.body
+          })
+        },
+        id,
+        req,
+        res
       })
     }
   )
 
   app.get(
-    '/:type(image-to-image|text-to-image)/:id',
+    '/:type(text-to-image|image-to-image|inpaint-image)/:id',
     async function (req, res, next): Promise<void> {
       const result = await statusDatabase.getStatusAsync(
         `/${req.params.type}`,
@@ -188,15 +257,4 @@ export async function serveAsync(options: {
   server.on('error', function (error: Error) {
     log.error(error.message)
   })
-}
-
-function parseImageFileType(file: Express.Multer.File): null | 'jpg' | 'png' {
-  switch (file.mimetype) {
-    case 'image/jpg':
-      return 'jpg'
-    case 'image/png':
-      return 'png'
-    default:
-      return null
-  }
 }

@@ -2,7 +2,7 @@ import EventEmitter from 'node:events'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { ImageToImageOptions } from '../types.js'
+import { InpaintImageOptions } from '../types.js'
 import { executeStableDiffusionScript } from '../utilities/execute-stable-diffusion-script.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -10,15 +10,15 @@ const SCRIPT_FILE_PATH = resolve(
   __dirname,
   '..',
   'stable-diffusion-scripts',
-  'image-to-image.py'
+  'inpaint-image.py'
 )
 
-export function imageToImage(
-  prompt: string,
+export function inpaintImage(
   imageFilePath: string,
-  options: ImageToImageOptions = {}
+  maskFilePath: string,
+  options: InpaintImageOptions = {}
 ): EventEmitter {
-  const parsedOptions = parseImageToImageOptions(options)
+  const parsedOptions = parseInpaintImageOptions(options)
   const {
     modelFilePath,
     outputDirectoryPath,
@@ -31,25 +31,17 @@ export function imageToImage(
     scriptArgs: {
       ...scriptArgs,
       imageFilePath: resolve(imageFilePath),
-      prompt
+      maskFilePath: resolve(maskFilePath)
     },
     scriptFilePath: SCRIPT_FILE_PATH,
     stableDiffusionRepositoryDirectoryPath
   })
 }
 
-function parseImageToImageOptions(
-  options: ImageToImageOptions
-): Required<ImageToImageOptions> {
+function parseInpaintImageOptions(
+  options: InpaintImageOptions
+): Required<InpaintImageOptions> {
   return {
-    batchSize: typeof options.batchSize === 'undefined' ? 1 : options.batchSize,
-    eta: typeof options.eta === 'undefined' ? 0 : options.eta,
-    guidanceScale:
-      typeof options.guidanceScale === 'undefined'
-        ? 7.5
-        : options.guidanceScale,
-    iterations:
-      typeof options.iterations === 'undefined' ? 1 : options.iterations,
     modelFilePath:
       typeof options.modelFilePath === 'undefined'
         ? './model.ckpt'
@@ -63,7 +55,6 @@ function parseImageToImageOptions(
       typeof options.stableDiffusionRepositoryDirectoryPath === 'undefined'
         ? './stable-diffusion'
         : options.stableDiffusionRepositoryDirectoryPath,
-    steps: typeof options.steps === 'undefined' ? 24 : options.steps,
-    strength: typeof options.strength === 'undefined' ? 0.75 : options.strength
+    steps: typeof options.steps === 'undefined' ? 32 : options.steps
   }
 }

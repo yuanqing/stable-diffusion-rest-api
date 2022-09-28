@@ -42,13 +42,15 @@ pip install -r requirements.txt
 cd ..
 ```
 
-Download [`sd-v1-4.ckpt`](https://huggingface.co/CompVis/stable-diffusion-v-1-4-original) from Hugging Face, and move it to the current working directory:
+Download the [text-to-image](https://www.googleapis.com/storage/v1/b/aai-blog-files/o/sd-v1-4.ckpt?alt=media) and [inpaint](https://heibox.uni-heidelberg.de/f/4d9ac7ea40c64582b7c9/?dl=1) model checkpoints:
 
 ```sh
-mv ~/Downloads/sd-v1-4.ckpt ./
+mkdir -p models
+curl --output models/text-to-image.ckpt https://www.googleapis.com/storage/v1/b/aai-blog-files/o/sd-v1-4.ckpt?alt=media
+curl --output models/inpaint-image.ckpt https://ommer-lab.com/files/latent-diffusion/inpainting_big.zip
 ```
 
-Generate a certificate and key to enable HTTPS:
+Generate a HTTPS certificate and key:
 
 ```sh
 mkcert -install
@@ -61,22 +63,23 @@ Start the API server:
 
 ```sh
 npx --yes -- stable-diffusion-rest-api \
+  --text-to-image-model ./models/text-to-image.ckpt \
+  --inpaint-image-model ./models/inpaint-image.ckpt \
+  --output ./output \
   --cert ./cert.pem \
   --key ./key.pem \
-  --output ./output \
-  --model ./sd-v1-4.ckpt \
   --port 8888
 ```
 
-### Text to Image
+### Text-to-image
 
 **`POST`** **`/text-to-image`**
 
 ```sh
 curl https://0.0.0.0:8888/text-to-image \
-  --form ddimSteps="8" \
-  --form iterations="2" \
   --form prompt="A digital illustration of a beautiful mountain landscape, detailed, thom tenerys, epic composition, 4k, trending on artstation, fantasy vivid colors" \
+  --form iterations="2" \
+  --form steps="8" \
   --form seed="42" \
   --header "Content-Type: multipart/form-data" \
   --location
@@ -88,16 +91,16 @@ curl https://0.0.0.0:8888/text-to-image \
 curl https://0.0.0.0:8888/text-to-image/<ID>
 ```
 
-### Image to Image
+### Image-to-image
 
 **`POST`** **`/image-to-image`**
 
 ```sh
 curl https://0.0.0.0:8888/image-to-image \
-  --form ddimSteps="24" \
-  --form iterations="2" \
-  --form image=@./image.png \
   --form prompt="A digital illustration of a beautiful mountain landscape, detailed, thom tenerys, epic composition, 4k, trending on artstation, fantasy vivid colors" \
+  --form image=@./image.png \
+  --form iterations="2" \
+  --form steps="24" \
   --form seed="42" \
   --header "Content-Type: multipart/form-data" \
   --location
@@ -107,4 +110,24 @@ curl https://0.0.0.0:8888/image-to-image \
 
 ```sh
 curl https://0.0.0.0:8888/image-to-image/<ID>
+```
+
+### Inpaint image
+
+**`POST`** **`/inpaint-image`**
+
+```sh
+curl https://0.0.0.0:8888/inpaint-image \
+  --form image=@./image.png \
+  --form mask=@./image-mask.png \
+  --form steps="32" \
+  --form seed="42" \
+  --header "Content-Type: multipart/form-data" \
+  --location
+```
+
+**`GET`** **`/inpaint-image/<ID>`**
+
+```sh
+curl https://0.0.0.0:8888/inpainting/<ID>
 ```

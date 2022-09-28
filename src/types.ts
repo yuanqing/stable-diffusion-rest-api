@@ -6,14 +6,14 @@ export type Progress = {
 
 type BaseOptions = {
   batchSize?: number
-  ddimEta?: number
-  ddimSteps?: number
+  eta?: number
   guidanceScale?: number
   iterations?: number
   modelFilePath?: string
   outputDirectoryPath?: string
   seed?: number
   stableDiffusionRepositoryDirectoryPath?: string
+  steps?: number
 }
 
 export type ImageToImageOptions = BaseOptions & {
@@ -24,6 +24,13 @@ export type TextToImageOptions = BaseOptions & {
   channels?: number
   downsamplingFactor?: number
   height?: number
-  sampler?: 'ddim' | 'plms'
   width?: number
+}
+
+export type InpaintImageOptions = {
+  modelFilePath?: string
+  outputDirectoryPath?: string
+  seed?: number
+  stableDiffusionRepositoryDirectoryPath?: string
+  steps?: number
 }

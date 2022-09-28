@@ -10,40 +10,48 @@ import torch
 import tqdm
 
 import ldm.models.diffusion.ddim
-import ldm.models.diffusion.plms
 import utilities
 
-PREFIX = "Sampling"
+
+CONFIG_FILE = "configs/stable-diffusion/v1-inference.yaml"
+DEVICE = "mps"
+LOG_PREFIX = "Sampling"
 
 
 def text_to_image(options):
-    os.makedirs(options.output, exist_ok=True)
+    os.makedirs(options.output_directory_path, exist_ok=True)
 
-    pytorch_lightning.seed_everything(options.seed)
+    if (options.seed != None):
+        pytorch_lightning.seed_everything(options.seed)
 
-    device = torch.device("mps")
-    config = omegaconf.OmegaConf.load(
-        'configs/stable-diffusion/v1-inference.yaml')
+    device = torch.device(DEVICE)
+    config = omegaconf.OmegaConf.load(CONFIG_FILE)
     model = utilities.load_model(
-        config=config, file_path=options.model).to(device)
+        config=config, file=options.model_file_path).to(device)
+
+    sampler = ldm.models.diffusion.ddim.DDIMSampler(model)
 
     shape = [
         options.channels,
         options.height // options.downsampling_factor,
         options.width // options.downsampling_factor,
     ]
-
-    sampler = (
-        ldm.models.diffusion.plms.PLMSSampler(model)
-        if options.sampler == "plms"
-        else ldm.models.diffusion.ddim.DDIMSampler(model)
+    x_T = (
+        torch.randn([
+            options.batch_size,
+            options.channels,
+            options.height // options.downsampling_factor,
+            options.width // options.downsampling_factor
+        ], device="cpu").to(torch.device(device))
+        if options.seed != None
+        else None
     )
 
     count = 1
     with torch.no_grad():
         with contextlib.nullcontext(device.type):
             with model.ema_scope():
-                for _ in tqdm.trange(options.iterations, desc=PREFIX):
+                for _ in tqdm.trange(options.iterations, desc=LOG_PREFIX):
                     conditioning = model.get_learned_conditioning(
                         options.batch_size * [options.prompt]
                     )
@@ -56,12 +64,13 @@ def text_to_image(options):
                     samples, _ = sampler.sample(
                         batch_size=options.batch_size,
                         conditioning=conditioning,
-                        eta=options.ddim_eta,
-                        S=options.ddim_steps,
+                        eta=options.eta,
+                        S=options.steps,
                         shape=shape,
                         unconditional_conditioning=unconditional_conditioning,
                         unconditional_guidance_scale=options.guidance_scale,
                         verbose=False,
+                        x_T=x_T
                     )
                     samples = model.decode_first_stage(samples)
                     samples = torch.clamp(
@@ -73,7 +82,7 @@ def text_to_image(options):
                         )
                         image = PIL.Image.fromarray(sample.astype(numpy.uint8))
                         image.save(os.path.join(
-                            options.output, f"{count}.png"))
+                            options.output_directory_path, f"{count}.png"))
                         count += 1
 
 
@@ -81,17 +90,16 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch_size", type=int, required=True)
     parser.add_argument("--channels", type=int, required=True)
-    parser.add_argument("--ddim_eta", type=float, required=True)
-    parser.add_argument("--ddim_steps", type=int, required=True)
     parser.add_argument("--downsampling_factor", type=int, required=True)
+    parser.add_argument("--eta", type=float, required=True)
     parser.add_argument("--guidance_scale", type=float, required=True)
     parser.add_argument("--height", type=int, required=True)
     parser.add_argument("--iterations", type=int, required=True)
-    parser.add_argument("--model", type=str, required=True)
-    parser.add_argument("--output", type=str, required=True)
+    parser.add_argument("--model_file_path", type=str, required=True)
+    parser.add_argument("--output_directory_path", type=str, required=True)
     parser.add_argument("--prompt", type=str, required=True)
-    parser.add_argument("--sampler", choices=["ddim", "plms"], required=True)
-    parser.add_argument("--seed", type=int, required=True)
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--steps", type=int, required=True)
     parser.add_argument("--width", type=int, required=True)
     options = parser.parse_args()
     text_to_image(options)
