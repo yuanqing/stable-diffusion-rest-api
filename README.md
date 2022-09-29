@@ -90,7 +90,7 @@ All REST API endpoints return JSON with the following shape:
 - **`resultUrl`** – URL to access the results of the image generation task.
 - **`images`** – An array of generated images; this array is empty if `status` is `QUEUED`. For each image, `progress` is a value between `0` and `1` *(both inclusive)*. An image has been successfully generated and will be accessible at `url` if and only if `progress` is `1`.
 
-### Text-to-image
+### Text-to-Image
 
 #### `POST` `/text-to-image`
 
@@ -148,7 +148,7 @@ curl https://0.0.0.0:8888/text-to-image/8cad07fd239aed5bf46a6d38f94487c1
 > }
 > ```
 
-### Image-to-image
+### Image-to-Image
 
 #### `POST` `/image-to-image`
 
@@ -156,7 +156,7 @@ curl https://0.0.0.0:8888/text-to-image/8cad07fd239aed5bf46a6d38f94487c1
 curl https://0.0.0.0:8888/image-to-image \
   --form prompt="A digital illustration of a beautiful mountain landscape, detailed, thom tenerys, epic composition, 4k, trending on artstation, fantasy vivid colors" \
   --form image=@./image.png \
-  --form iterations="2" \
+  --form iterations="3" \
   --form steps="24" \
   --form seed="42" \
   --header "Content-Type: multipart/form-data" \
@@ -177,6 +177,10 @@ curl https://0.0.0.0:8888/image-to-image \
 >     {
 >       "progress": 0,
 >       "url": "/inpaint-image/634b520c0ad332e179b5899e1f9b842f/2.png"
+>     },
+>     {
+>       "progress": 0,
+>       "url": "/inpaint-image/634b520c0ad332e179b5899e1f9b842f/3.png"
 >     }
 >   ]
 > }
@@ -202,6 +206,10 @@ curl https://0.0.0.0:8888/image-to-image/634b520c0ad332e179b5899e1f9b842f
 >     {
 >       "progress": 1,
 >       "url": "/inpaint-image/634b520c0ad332e179b5899e1f9b842f/2.png"
+>     },
+>     {
+>       "progress": 1,
+>       "url": "/inpaint-image/634b520c0ad332e179b5899e1f9b842f/3.png"
 >     }
 >   ]
 > }
