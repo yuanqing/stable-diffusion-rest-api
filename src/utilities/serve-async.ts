@@ -12,21 +12,18 @@ import { imageToImage } from '../api/image-to-image.js'
 import { inpaintImage } from '../api/inpaint-image.js'
 import { textToImage } from '../api/text-to-image.js'
 import {
+  BaseOptions,
   ImageToImageOptions,
   InpaintImageOptions,
   Progress,
   TextToImageOptions
 } from '../types.js'
 import { addImageFileExtensionAsync } from './add-image-file-extension-async.js'
+import { createDatabase } from './create-database.js'
 import { createId } from './create-id.js'
-import { createStatusDatabase } from './create-status-database.js'
 import { log } from './log.js'
 
-export type ConfigOptions =
-  | 'modelFilePath'
-  | 'outputDirectoryPath'
-  | 'outputFilePath'
-  | 'stableDiffusionRepositoryDirectoryPath'
+export type ConfigOptionKeys = keyof Omit<BaseOptions, 'seed'>
 
 export async function serveAsync(options: {
   certFilePath: string
@@ -49,9 +46,7 @@ export async function serveAsync(options: {
     stableDiffusionRepositoryDirectoryPath
   } = options
 
-  const statusDatabase = createStatusDatabase(
-    join(outputDirectoryPath, '.database')
-  )
+  const statusDatabase = createDatabase(join(outputDirectoryPath, '.database'))
 
   if (deleteIncomplete === true) {
     await statusDatabase.deleteIncompleteAsync()
@@ -112,7 +107,7 @@ export async function serveAsync(options: {
     upload.none(),
     async function (
       req: {
-        body: { prompt: string } & Omit<TextToImageOptions, ConfigOptions>
+        body: { prompt: string } & Omit<TextToImageOptions, ConfigOptionKeys>
         path: string
       },
       res: {
@@ -146,7 +141,7 @@ export async function serveAsync(options: {
     upload.single('image'),
     async function (
       req: {
-        body: { prompt: string } & Omit<ImageToImageOptions, ConfigOptions>
+        body: { prompt: string } & Omit<ImageToImageOptions, ConfigOptionKeys>
         file?: Express.Multer.File
         path: string
       },
@@ -187,7 +182,7 @@ export async function serveAsync(options: {
     ]),
     async function (
       req: {
-        body: Omit<InpaintImageOptions, ConfigOptions>
+        body: Omit<InpaintImageOptions, ConfigOptionKeys>
         files?:
           | Array<Express.Multer.File>
           | Record<string, Array<Express.Multer.File>>

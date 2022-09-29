@@ -32,10 +32,10 @@
         method: 'POST',
         body: formData
       })
-      const { resultEndpoint } = await response.json()
+      const { resultUrl } = await response.json()
       const renderedImageUrls = {}
       const intervalId = setInterval(async function callback () {
-        const response = await fetch(`${BASE_URL}${resultEndpoint}`, {
+        const response = await fetch(`${BASE_URL}${resultUrl}`, {
           method: 'GET'
         })
         const { images, status } = await response.json()

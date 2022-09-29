@@ -3,6 +3,12 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { InpaintImageOptions } from '../types.js'
+import {
+  DEFAULT_INPAINT_IMAGE_MODEL_FILE_PATH,
+  DEFAULT_OUTPUT_DIRECTORY_PATH,
+  DEFAULT_SEED,
+  DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH
+} from '../utilities/constants.js'
 import { executeStableDiffusionScript } from '../utilities/execute-stable-diffusion-script.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -44,16 +50,16 @@ function parseInpaintImageOptions(
   return {
     modelFilePath:
       typeof options.modelFilePath === 'undefined'
-        ? './model.ckpt'
+        ? DEFAULT_INPAINT_IMAGE_MODEL_FILE_PATH
         : options.modelFilePath,
     outputDirectoryPath:
       typeof options.outputDirectoryPath === 'undefined'
-        ? './output'
+        ? DEFAULT_OUTPUT_DIRECTORY_PATH
         : options.outputDirectoryPath,
-    seed: typeof options.seed === 'undefined' ? 42 : options.seed,
+    seed: typeof options.seed === 'undefined' ? DEFAULT_SEED : options.seed,
     stableDiffusionRepositoryDirectoryPath:
       typeof options.stableDiffusionRepositoryDirectoryPath === 'undefined'
-        ? './stable-diffusion'
+        ? DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH
         : options.stableDiffusionRepositoryDirectoryPath,
     steps: typeof options.steps === 'undefined' ? 32 : options.steps
   }

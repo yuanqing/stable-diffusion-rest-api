@@ -71,9 +71,28 @@ npx --yes -- stable-diffusion-rest-api \
   --port 8888
 ```
 
+### API response
+
+All REST API endpoints return JSON with the following shape:
+
+```ts
+{
+  status: 'QUEUED' | 'IN_PROGRESS' | 'COMPLETE'
+  resultUrl: string
+  images: Array<{
+    progress: number
+    url: string
+  }>
+}
+```
+
+- **`status`** – One of `QUEUED`, `IN_PROGRESS` or `COMPLETE`.
+- **`resultUrl`** – URL to access the results of the image generation task.
+- **`images`** – An array of generated images; this array is empty if `status` is `QUEUED`. For each image, `progress` is a value between `0` and `1` *(both inclusive)*. An image has been successfully generated and will be accessible at `url` if and only if `progress` is `1`.
+
 ### Text-to-image
 
-**`POST`** **`/text-to-image`**
+#### `POST` `/text-to-image`
 
 ```sh
 curl https://0.0.0.0:8888/text-to-image \
@@ -85,15 +104,53 @@ curl https://0.0.0.0:8888/text-to-image \
   --location
 ```
 
-**`GET`** **`/text-to-image/<ID>`**
+> *Sample response*
+>
+> ```json
+> {
+>   "status": "IN_PROGRESS",
+>   "resultUrl": "/text-to-image/8cad07fd239aed5bf46a6d38f94487c1",
+>   "images": [
+>     {
+>       "progress": 0.5,
+>       "url": "/text-to-image/8cad07fd239aed5bf46a6d38f94487c1/1.png"
+>     },
+>     {
+>       "progress": 0,
+>       "url": "/text-to-image/8cad07fd239aed5bf46a6d38f94487c1/2.png"
+>     }
+>   ]
+> }
+> ```
+
+#### `GET` `/text-to-image/<ID>`
 
 ```sh
-curl https://0.0.0.0:8888/text-to-image/<ID>
+curl https://0.0.0.0:8888/text-to-image/8cad07fd239aed5bf46a6d38f94487c1
 ```
+
+> *Sample response*
+>
+> ```json
+> {
+>   "status": "COMPLETE",
+>   "resultUrl": "/text-to-image/8cad07fd239aed5bf46a6d38f94487c1",
+>   "images": [
+>     {
+>       "progress": 1,
+>       "url": "/text-to-image/8cad07fd239aed5bf46a6d38f94487c1/1.png"
+>     },
+>     {
+>       "progress": 1,
+>       "url": "/text-to-image/8cad07fd239aed5bf46a6d38f94487c1/2.png"
+>     }
+>   ]
+> }
+> ```
 
 ### Image-to-image
 
-**`POST`** **`/image-to-image`**
+#### `POST` `/image-to-image`
 
 ```sh
 curl https://0.0.0.0:8888/image-to-image \
@@ -106,15 +163,53 @@ curl https://0.0.0.0:8888/image-to-image \
   --location
 ```
 
-**`GET`** **`/image-to-image/<ID>`**
+> *Sample response*
+>
+> ```json
+> {
+>   "status": "IN_PROGRESS",
+>   "resultUrl": "/image-to-image/634b520c0ad332e179b5899e1f9b842f",
+>   "images": [
+>     {
+>       "progress": 0.67,
+>       "url": "/inpaint-image/634b520c0ad332e179b5899e1f9b842f/1.png"
+>     },
+>     {
+>       "progress": 0,
+>       "url": "/inpaint-image/634b520c0ad332e179b5899e1f9b842f/2.png"
+>     }
+>   ]
+> }
+> ```
+
+#### `GET` `/image-to-image/<ID>`
 
 ```sh
-curl https://0.0.0.0:8888/image-to-image/<ID>
+curl https://0.0.0.0:8888/image-to-image/634b520c0ad332e179b5899e1f9b842f
 ```
+
+> *Sample response*
+>
+> ```json
+> {
+>   "status": "COMPLETE",
+>   "resultUrl": "/image-to-image/634b520c0ad332e179b5899e1f9b842f",
+>   "images": [
+>     {
+>       "progress": 1,
+>       "url": "/inpaint-image/634b520c0ad332e179b5899e1f9b842f/1.png"
+>     },
+>     {
+>       "progress": 1,
+>       "url": "/inpaint-image/634b520c0ad332e179b5899e1f9b842f/2.png"
+>     }
+>   ]
+> }
+> ```
 
 ### Inpaint image
 
-**`POST`** **`/inpaint-image`**
+#### `POST` `/inpaint-image`
 
 ```sh
 curl https://0.0.0.0:8888/inpaint-image \
@@ -126,8 +221,38 @@ curl https://0.0.0.0:8888/inpaint-image \
   --location
 ```
 
-**`GET`** **`/inpaint-image/<ID>`**
+> *Sample response*
+>
+> ```json
+> {
+>   "status": "IN_PROGRESS",
+>   "resultUrl": "/inpaint-image/3dddcde9d8170b9a49729dbf27623bb7",
+>   "images": [
+>     {
+>       "progress": 0.45,
+>       "url": "/inpaint-image/3dddcde9d8170b9a49729dbf27623bb7/1.png"
+>     }
+>   ]
+> }
+> ```
+
+#### `GET` `/inpaint-image/<ID>`
 
 ```sh
-curl https://0.0.0.0:8888/inpainting/<ID>
+curl https://0.0.0.0:8888/inpaint-image/3dddcde9d8170b9a49729dbf27623bb7
 ```
+
+> *Sample response*
+>
+> ```json
+> {
+>   "status": "COMPLETE",
+>   "resultUrl": "/inpaint-image/3dddcde9d8170b9a49729dbf27623bb7",
+>   "images": [
+>     {
+>       "progress": 1,
+>       "url": "/inpaint-image/3dddcde9d8170b9a49729dbf27623bb7/1.png"
+>     }
+>   ]
+> }
+> ```

@@ -1,10 +1,10 @@
 import { Level } from 'level'
 
-import { Progress } from '../types'
+import { Progress, RestApiResponse } from '../types'
 
-export type StatusDatabase = {
+export type Database = {
   deleteIncompleteAsync: () => Promise<void>
-  getStatusAsync: (type: string, id: string) => Promise<null | Result>
+  getStatusAsync: (type: string, id: string) => Promise<null | RestApiResponse>
   setStatusToQueuedAsync: (type: string, id: string) => Promise<void>
   setStatusToInProgressAsync: (
     type: string,
@@ -14,24 +14,14 @@ export type StatusDatabase = {
   setStatusToDoneAsync: (type: string, id: string) => Promise<void>
 }
 
-type Result = {
-  images: Array<Image>
-  resultEndpoint: string
-  status: 'QUEUED' | 'IN_PROGRESS' | 'COMPLETE'
-}
-type Image = {
-  url: string
-  progress: number
-}
-
 const levelDbOptions = { valueEncoding: 'json' }
 
-export function createStatusDatabase(directoryPath: string): StatusDatabase {
+export function createDatabase(directoryPath: string): Database {
   const db = new Level(directoryPath)
 
   async function deleteIncompleteAsync(): Promise<void> {
     const deleteOperations: Array<{ type: 'del'; key: string }> = []
-    for await (const [key, result] of db.iterator<string, Result>(
+    for await (const [key, result] of db.iterator<string, RestApiResponse>(
       levelDbOptions
     )) {
       if (result.status !== 'COMPLETE') {
@@ -44,10 +34,10 @@ export function createStatusDatabase(directoryPath: string): StatusDatabase {
   async function getStatusAsync(
     type: string,
     id: string
-  ): Promise<null | Result> {
+  ): Promise<null | RestApiResponse> {
     try {
       const key = createKey(type, id)
-      const result: null | Result = await db.get(key, levelDbOptions)
+      const result: null | RestApiResponse = await db.get(key, levelDbOptions)
       return result
     } catch (error: any) {
       return null
@@ -63,7 +53,7 @@ export function createStatusDatabase(directoryPath: string): StatusDatabase {
       key,
       {
         images: [],
-        resultEndpoint: `${type}/${id}`,
+        resultUrl: `${type}/${id}`,
         status: 'QUEUED'
       },
       levelDbOptions
@@ -76,7 +66,7 @@ export function createStatusDatabase(directoryPath: string): StatusDatabase {
     { currentSample, progress, totalSamples }: Progress
   ): Promise<void> {
     const key = createKey(type, id)
-    const result: null | Result = await db.get(key, levelDbOptions)
+    const result: null | RestApiResponse = await db.get(key, levelDbOptions)
     if (result === null) {
       throw new Error('`status` is `null`')
     }
@@ -97,7 +87,7 @@ export function createStatusDatabase(directoryPath: string): StatusDatabase {
 
   async function setStatusToDoneAsync(type: string, id: string): Promise<void> {
     const key = createKey(type, id)
-    const result: null | Result = await db.get(key, levelDbOptions)
+    const result: null | RestApiResponse = await db.get(key, levelDbOptions)
     if (result === null) {
       throw new Error('`status` is `null`')
     }

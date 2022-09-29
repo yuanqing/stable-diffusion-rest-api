@@ -3,6 +3,12 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { TextToImageOptions } from '../types.js'
+import {
+  DEFAULT_OUTPUT_DIRECTORY_PATH,
+  DEFAULT_SEED,
+  DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH,
+  DEFAULT_TEXT_TO_IMAGE_MODEL_FILE_PATH
+} from '../utilities/constants.js'
 import { executeStableDiffusionScript } from '../utilities/execute-stable-diffusion-script.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -56,16 +62,16 @@ function parseTextToImageOptions(
       typeof options.iterations === 'undefined' ? 1 : options.iterations,
     modelFilePath:
       typeof options.modelFilePath === 'undefined'
-        ? './model.ckpt'
+        ? DEFAULT_TEXT_TO_IMAGE_MODEL_FILE_PATH
         : options.modelFilePath,
     outputDirectoryPath:
       typeof options.outputDirectoryPath === 'undefined'
-        ? './output'
+        ? DEFAULT_OUTPUT_DIRECTORY_PATH
         : options.outputDirectoryPath,
-    seed: typeof options.seed === 'undefined' ? 42 : options.seed,
+    seed: typeof options.seed === 'undefined' ? DEFAULT_SEED : options.seed,
     stableDiffusionRepositoryDirectoryPath:
       typeof options.stableDiffusionRepositoryDirectoryPath === 'undefined'
-        ? './stable-diffusion'
+        ? DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH
         : options.stableDiffusionRepositoryDirectoryPath,
     steps: typeof options.steps === 'undefined' ? 8 : options.steps,
     width: typeof options.width === 'undefined' ? 512 : options.width

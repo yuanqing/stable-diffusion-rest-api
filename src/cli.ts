@@ -1,28 +1,41 @@
 #!/usr/bin/env node
 import sade from 'sade'
 
+import {
+  DEFAULT_CERT_FILE_PATH,
+  DEFAULT_INPAINT_IMAGE_MODEL_FILE_PATH,
+  DEFAULT_KEY_FILE_PATH,
+  DEFAULT_OUTPUT_DIRECTORY_PATH,
+  DEFAULT_PORT,
+  DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH,
+  DEFAULT_TEXT_TO_IMAGE_MODEL_FILE_PATH
+} from './utilities/constants.js'
 import { serveAsync } from './utilities/serve-async.js'
 
 sade('stable-diffusion-rest-api', true)
   .option(
     '--text-to-image-model',
     'Path to the text-to-image model checkpoint',
-    './models/text-to-image.ckpt'
+    DEFAULT_TEXT_TO_IMAGE_MODEL_FILE_PATH
   )
   .option(
     '--inpaint-image-model',
     'Path to the inpaint image model checkpoint',
-    './models/inpaint-image.ckpt'
+    DEFAULT_INPAINT_IMAGE_MODEL_FILE_PATH
   )
   .option(
     '--repository',
     'Path to the Stable Diffusion repository',
-    './stable-diffusion'
+    DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH
   )
-  .option('--output', 'Directory to output generated images', './output')
-  .option('--cert', 'Path to the SSL certicate', './cert.pem')
-  .option('--key', 'Path to the SSL certicate key', './key.pem')
-  .option('--port', 'Port to serve the REST API', 8888)
+  .option(
+    '--output',
+    'Directory to output generated images',
+    DEFAULT_OUTPUT_DIRECTORY_PATH
+  )
+  .option('--cert', 'Path to the SSL certicate', DEFAULT_CERT_FILE_PATH)
+  .option('--key', 'Path to the SSL certicate key', DEFAULT_KEY_FILE_PATH)
+  .option('--port', 'Port to serve the REST API', DEFAULT_PORT)
   .option(
     '--delete-incomplete',
     'Delete all incomplete image generation tasks before starting the server',
