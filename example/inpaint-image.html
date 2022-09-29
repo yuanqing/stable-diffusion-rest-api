@@ -16,13 +16,12 @@
       <input type="file" name="image" accept="image/png, image/jpeg" required="required">
     </label>
     <label>
-      Prompt
-      <textarea name="prompt" rows="5" required="required">A digital illustration of a beautiful mountain landscape, detailed, thom tenerys, epic composition, 4k, trending on artstation, fantasy vivid colors</textarea>
+      Mask
+      <input type="file" name="mask" accept="image/png, image/jpeg" required="required">
     </label>
-    <input type="hidden" name="iterations" value="3">
-    <input type="hidden" name="steps" value="24">
+    <input type="hidden" name="steps" value="32">
     <input type="hidden" name="seed" value="42">
-    <input type="submit" value="Image-to-Image">
+    <input type="submit" value="Inpaint Image">
   </form>
   <div class="results"></div>
   <script>
@@ -37,7 +36,7 @@
       resultsElement.innerHTML = ''
       event.preventDefault()
       const formData = new FormData(event.target)
-      const response = await fetch(`${BASE_URL}/image-to-image`, {
+      const response = await fetch(`${BASE_URL}/inpaint-image`, {
         method: 'POST',
         body: formData
       })
