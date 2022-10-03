@@ -87,9 +87,9 @@ All REST API endpoints return JSON with one of the following shapes, depending o
   status: 'IN_PROGRESS'
   resultUrl: string
   progress: {
-    totalImages: number
     currentImageIndex: number
     currentImageProgress: number
+    totalImages: number
   }
   imageUrls: Array<string>
 }
@@ -106,10 +106,10 @@ All REST API endpoints return JSON with one of the following shapes, depending o
 - **`status`** is one of `QUEUED`, `IN_PROGRESS` or `COMPLETE`
 - **`resultUrl`** is the URL to access the results of the image generation task
 - **`progress`** contains details about the progress of the image generation task:
-  - `totalImages` is the total number of images to be generated
   - `currentImageIndex` is the index of the image currently being generated
   - `currentImageProgress` is a value between `0` and `1` representing the progress of generating the current image
-- **`imageUrls`** is the URLs of the generated images
+  - `totalImages` is the total number of images to be generated
+- **`imageUrls`** is the list of URLs of the generated images
 
 ### Text-to-Image
 
@@ -156,6 +156,7 @@ curl https://0.0.0.0:8888/text-to-image/61f957e4462ea8eff36d9e7a7b650994
 >     "/text-to-image/61f957e4462ea8eff36d9e7a7b650994/2.png"
 >   ]
 > }
+> ```
 >
 > ```json
 > {
@@ -215,6 +216,7 @@ curl https://0.0.0.0:8888/image-to-image/ab1104f3b55fbab7779cdbdc73ed276e
 >     "/image-to-image/ab1104f3b55fbab7779cdbdc73ed276e/2.png"
 >   ]
 > }
+> ```
 >
 > ```json
 > {
@@ -270,6 +272,7 @@ curl https://0.0.0.0:8888/inpaint-image/59a89dfc9f075942ce9afc08312b8296
 >   },
 >   "imageUrls": []
 > }
+> ```
 >
 > ```json
 > {
