@@ -4,10 +4,19 @@ import { fileURLToPath } from 'node:url'
 
 import { TextToImageOptions } from '../types.js'
 import {
+  DEFAULT_BATCH_SIZE,
+  DEFAULT_CHANNELS,
+  DEFAULT_DOWNSAMPLING_FACTOR,
+  DEFAULT_ETA,
+  DEFAULT_GUIDANCE_SCALE,
+  DEFAULT_HEIGHT,
+  DEFAULT_ITERATIONS,
+  DEFAULT_MODEL_FILE_PATH_TEXT_TO_IMAGE,
   DEFAULT_OUTPUT_DIRECTORY_PATH,
   DEFAULT_SEED,
   DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH,
-  DEFAULT_TEXT_TO_IMAGE_MODEL_FILE_PATH
+  DEFAULT_STEPS_TEXT_TO_IMAGE,
+  DEFAULT_WIDTH
 } from '../utilities/constants.js'
 import { executeStableDiffusionScript } from '../utilities/execute-stable-diffusion-script.js'
 
@@ -46,23 +55,32 @@ function parseTextToImageOptions(
   options: TextToImageOptions
 ): Required<TextToImageOptions> {
   return {
-    batchSize: typeof options.batchSize === 'undefined' ? 1 : options.batchSize,
-    channels: typeof options.channels === 'undefined' ? 4 : options.channels,
+    batchSize:
+      typeof options.batchSize === 'undefined'
+        ? DEFAULT_BATCH_SIZE
+        : options.batchSize,
+    channels:
+      typeof options.channels === 'undefined'
+        ? DEFAULT_CHANNELS
+        : options.channels,
     downsamplingFactor:
       typeof options.downsamplingFactor === 'undefined'
-        ? 8
+        ? DEFAULT_DOWNSAMPLING_FACTOR
         : options.downsamplingFactor,
-    eta: typeof options.eta === 'undefined' ? 0 : options.eta,
+    eta: typeof options.eta === 'undefined' ? DEFAULT_ETA : options.eta,
     guidanceScale:
       typeof options.guidanceScale === 'undefined'
-        ? 7.5
+        ? DEFAULT_GUIDANCE_SCALE
         : options.guidanceScale,
-    height: typeof options.height === 'undefined' ? 512 : options.height,
+    height:
+      typeof options.height === 'undefined' ? DEFAULT_HEIGHT : options.height,
     iterations:
-      typeof options.iterations === 'undefined' ? 1 : options.iterations,
+      typeof options.iterations === 'undefined'
+        ? DEFAULT_ITERATIONS
+        : options.iterations,
     modelFilePath:
       typeof options.modelFilePath === 'undefined'
-        ? DEFAULT_TEXT_TO_IMAGE_MODEL_FILE_PATH
+        ? DEFAULT_MODEL_FILE_PATH_TEXT_TO_IMAGE
         : options.modelFilePath,
     outputDirectoryPath:
       typeof options.outputDirectoryPath === 'undefined'
@@ -73,7 +91,10 @@ function parseTextToImageOptions(
       typeof options.stableDiffusionRepositoryDirectoryPath === 'undefined'
         ? DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH
         : options.stableDiffusionRepositoryDirectoryPath,
-    steps: typeof options.steps === 'undefined' ? 8 : options.steps,
-    width: typeof options.width === 'undefined' ? 512 : options.width
+    steps:
+      typeof options.steps === 'undefined'
+        ? DEFAULT_STEPS_TEXT_TO_IMAGE
+        : options.steps,
+    width: typeof options.width === 'undefined' ? DEFAULT_WIDTH : options.width
   }
 }

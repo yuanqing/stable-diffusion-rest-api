@@ -1,10 +1,16 @@
 import { Level } from 'level'
 
-import { Progress, RestApiResponse } from '../types'
+import {
+  CompleteResponse,
+  InProgressResponse,
+  Progress,
+  QueuedResponse,
+  RestApiResponse
+} from '../types'
 
 export type Database = {
-  deleteIncompleteAsync: () => Promise<void>
-  getStatusAsync: (type: string, id: string) => Promise<null | RestApiResponse>
+  deleteIncompleteJobsAsync: () => Promise<void>
+  getJobAsync: (type: string, id: string) => Promise<null | RestApiResponse>
   setStatusToQueuedAsync: (type: string, id: string) => Promise<void>
   setStatusToInProgressAsync: (
     type: string,
@@ -19,7 +25,7 @@ const levelDbOptions = { valueEncoding: 'json' }
 export function createDatabase(directoryPath: string): Database {
   const db = new Level(directoryPath)
 
-  async function deleteIncompleteAsync(): Promise<void> {
+  async function deleteIncompleteJobsAsync(): Promise<void> {
     const deleteOperations: Array<{ type: 'del'; key: string }> = []
     for await (const [key, result] of db.iterator<string, RestApiResponse>(
       levelDbOptions
@@ -48,56 +54,70 @@ export function createDatabase(directoryPath: string): Database {
     type: string,
     id: string
   ): Promise<void> {
+    const result: null | RestApiResponse = await getStatusAsync(type, id)
+    if (result !== null) {
+      throw new Error('`result` must be `null`')
+    }
     const key = createKey(type, id)
-    return db.put(
-      key,
-      {
-        images: [],
-        resultUrl: `${type}/${id}`,
-        status: 'QUEUED'
-      },
-      levelDbOptions
-    )
+    const value: QueuedResponse = {
+      resultUrl: `${type}/${id}`,
+      status: 'QUEUED'
+    }
+    return db.put(key, value, levelDbOptions)
   }
 
   async function setStatusToInProgressAsync(
     type: string,
     id: string,
-    { currentSample, progress, totalSamples }: Progress
+    progress: Progress
   ): Promise<void> {
-    const key = createKey(type, id)
-    const result: null | RestApiResponse = await db.get(key, levelDbOptions)
+    const result: null | RestApiResponse = await getStatusAsync(type, id)
     if (result === null) {
-      throw new Error('`status` is `null`')
+      throw new Error('`result` is `null`')
     }
-    result.status = 'IN_PROGRESS'
-    if (result.images.length === 0) {
-      let i = 0
-      while (i < totalSamples) {
-        result.images.push({
-          progress: 0,
-          url: `${type}/${id}/${i + 1}.png`
-        })
-        i += 1
-      }
+    if (result.status === 'COMPLETE') {
+      throw new Error("`result` cannot be 'COMPLETE'")
     }
-    result.images[currentSample - 1].progress = progress
-    return db.put(key, result, levelDbOptions)
+    const imageUrls: Array<string> = []
+    const completedImages =
+      progress.currentImageProgress === 1
+        ? progress.currentImageIndex
+        : Math.max(0, progress.currentImageIndex - 1)
+    let i = 0
+    while (i < completedImages) {
+      imageUrls.push(`${type}/${id}/${i + 1}.png`)
+      i += 1
+    }
+    const key = createKey(type, id)
+    const value: InProgressResponse = {
+      imageUrls,
+      progress,
+      resultUrl: result.resultUrl,
+      status: 'IN_PROGRESS'
+    }
+    return db.put(key, value, levelDbOptions)
   }
 
   async function setStatusToDoneAsync(type: string, id: string): Promise<void> {
-    const key = createKey(type, id)
-    const result: null | RestApiResponse = await db.get(key, levelDbOptions)
+    const result: null | RestApiResponse = await getStatusAsync(type, id)
     if (result === null) {
-      throw new Error('`status` is `null`')
+      throw new Error('`result` is `null`')
     }
-    result.status = 'COMPLETE'
-    return db.put(key, result, levelDbOptions)
+    if (result.status !== 'IN_PROGRESS') {
+      throw new Error("`result` must be 'IN_PROGRESS'")
+    }
+    const key = createKey(type, id)
+    const value: CompleteResponse = {
+      imageUrls: result.imageUrls,
+      resultUrl: result.resultUrl,
+      status: 'COMPLETE'
+    }
+    return db.put(key, value, levelDbOptions)
   }
 
   return {
-    deleteIncompleteAsync,
-    getStatusAsync,
+    deleteIncompleteJobsAsync,
+    getJobAsync: getStatusAsync,
     setStatusToDoneAsync,
     setStatusToInProgressAsync,
     setStatusToQueuedAsync

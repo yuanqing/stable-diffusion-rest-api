@@ -73,22 +73,43 @@ npx --yes -- stable-diffusion-rest-api \
 
 ### API response
 
-All REST API endpoints return JSON with the following shape:
+All REST API endpoints return JSON with one of the following shapes, depending on the status of the image generation task:
 
 ```ts
 {
-  status: 'QUEUED' | 'IN_PROGRESS' | 'COMPLETE'
+  status: 'QUEUED'
   resultUrl: string
-  images: Array<{
-    progress: number
-    url: string
-  }>
 }
 ```
 
-- **`status`** – One of `QUEUED`, `IN_PROGRESS` or `COMPLETE`.
-- **`resultUrl`** – URL to access the results of the image generation task.
-- **`images`** – An array of generated images; this array is empty if `status` is `QUEUED`. For each image, `progress` is a value between `0` and `1` *(both inclusive)*. An image has been successfully generated and will be accessible at `url` if and only if `progress` is `1`.
+```ts
+{
+  status: 'IN_PROGRESS'
+  resultUrl: string
+  progress: {
+    totalImages: number
+    currentImageIndex: number
+    currentImageProgress: number
+  }
+  imageUrls: Array<string>
+}
+```
+
+```ts
+{
+  status: 'COMPLETE'
+  resultUrl: string
+  imageUrls: Array<string>
+}
+```
+
+- **`status`** is one of `QUEUED`, `IN_PROGRESS` or `COMPLETE`
+- **`resultUrl`** is the URL to access the results of the image generation task
+- **`progress`** contains details about the progress of the image generation task:
+  - `totalImages` is the total number of images to be generated
+  - `currentImageIndex` is the index of the image currently being generated
+  - `currentImageProgress` is a value between `0` and `1` representing the progress of generating the current image
+- **`imageUrls`** is the URLs of the generated images
 
 ### Text-to-Image
 
@@ -97,7 +118,7 @@ All REST API endpoints return JSON with the following shape:
 ```sh
 curl https://0.0.0.0:8888/text-to-image \
   --form prompt="A digital illustration of a beautiful mountain landscape, detailed, thom tenerys, epic composition, 4k, trending on artstation, fantasy vivid colors" \
-  --form iterations="2" \
+  --form iterations="3" \
   --form steps="8" \
   --form seed="42" \
   --header "Content-Type: multipart/form-data" \
@@ -108,42 +129,42 @@ curl https://0.0.0.0:8888/text-to-image \
 >
 > ```json
 > {
->   "status": "IN_PROGRESS",
->   "resultUrl": "/text-to-image/8cad07fd239aed5bf46a6d38f94487c1",
->   "images": [
->     {
->       "progress": 0.5,
->       "url": "/text-to-image/8cad07fd239aed5bf46a6d38f94487c1/1.png"
->     },
->     {
->       "progress": 0,
->       "url": "/text-to-image/8cad07fd239aed5bf46a6d38f94487c1/2.png"
->     }
->   ]
+>   "status": "QUEUED",
+>   "resultUrl": "/text-to-image/61f957e4462ea8eff36d9e7a7b650994"
 > }
 > ```
 
 #### `GET` `/text-to-image/<ID>`
 
 ```sh
-curl https://0.0.0.0:8888/text-to-image/8cad07fd239aed5bf46a6d38f94487c1
+curl https://0.0.0.0:8888/text-to-image/61f957e4462ea8eff36d9e7a7b650994
 ```
 
 > *Sample response*
 >
 > ```json
 > {
+>   "status": "IN_PROGRESS",
+>   "resultUrl": "/text-to-image/61f957e4462ea8eff36d9e7a7b650994",
+>   "progress": {
+>     "totalImages": 3,
+>     "currentImageIndex": 3,
+>     "currentImageProgress": 0.5
+>   },
+>   "imageUrls": [
+>     "/text-to-image/61f957e4462ea8eff36d9e7a7b650994/1.png",
+>     "/text-to-image/61f957e4462ea8eff36d9e7a7b650994/2.png"
+>   ]
+> }
+>
+> ```json
+> {
 >   "status": "COMPLETE",
->   "resultUrl": "/text-to-image/8cad07fd239aed5bf46a6d38f94487c1",
->   "images": [
->     {
->       "progress": 1,
->       "url": "/text-to-image/8cad07fd239aed5bf46a6d38f94487c1/1.png"
->     },
->     {
->       "progress": 1,
->       "url": "/text-to-image/8cad07fd239aed5bf46a6d38f94487c1/2.png"
->     }
+>   "resultUrl": "/text-to-image/61f957e4462ea8eff36d9e7a7b650994",
+>   "imageUrls": [
+>     "/text-to-image/61f957e4462ea8eff36d9e7a7b650994/1.png",
+>     "/text-to-image/61f957e4462ea8eff36d9e7a7b650994/2.png",
+>     "/text-to-image/61f957e4462ea8eff36d9e7a7b650994/3.png"
 >   ]
 > }
 > ```
@@ -154,7 +175,7 @@ curl https://0.0.0.0:8888/text-to-image/8cad07fd239aed5bf46a6d38f94487c1
 
 ```sh
 curl https://0.0.0.0:8888/image-to-image \
-  --form prompt="A digital illustration of a beautiful mountain landscape, detailed, thom tenerys, epic composition, 4k, trending on artstation, fantasy vivid colors" \
+  --form prompt="A digital illustration of a beautiful mountain landscape, detailed, thom tenery, epic composition, 4k, trending on artstation, fantasy vivid colors" \
   --form image=@./image.png \
   --form iterations="3" \
   --form steps="24" \
@@ -167,55 +188,47 @@ curl https://0.0.0.0:8888/image-to-image \
 >
 > ```json
 > {
->   "status": "IN_PROGRESS",
->   "resultUrl": "/image-to-image/634b520c0ad332e179b5899e1f9b842f",
->   "images": [
->     {
->       "progress": 0.67,
->       "url": "/inpaint-image/634b520c0ad332e179b5899e1f9b842f/1.png"
->     },
->     {
->       "progress": 0,
->       "url": "/inpaint-image/634b520c0ad332e179b5899e1f9b842f/2.png"
->     },
->     {
->       "progress": 0,
->       "url": "/inpaint-image/634b520c0ad332e179b5899e1f9b842f/3.png"
->     }
->   ]
+>   "status": "QUEUED",
+>   "resultUrl": "/image-to-image/ab1104f3b55fbab7779cdbdc73ed276e"
 > }
 > ```
 
 #### `GET` `/image-to-image/<ID>`
 
 ```sh
-curl https://0.0.0.0:8888/image-to-image/634b520c0ad332e179b5899e1f9b842f
+curl https://0.0.0.0:8888/image-to-image/ab1104f3b55fbab7779cdbdc73ed276e
 ```
 
 > *Sample response*
 >
 > ```json
 > {
+>   "status": "IN_PROGRESS",
+>   "resultUrl": "/image-to-image/ab1104f3b55fbab7779cdbdc73ed276e",
+>   "progress": {
+>     "totalImages": 3,
+>     "currentImageIndex": 3,
+>     "currentImageProgress": 0.5
+>   },
+>   "imageUrls": [
+>     "/image-to-image/ab1104f3b55fbab7779cdbdc73ed276e/1.png",
+>     "/image-to-image/ab1104f3b55fbab7779cdbdc73ed276e/2.png"
+>   ]
+> }
+>
+> ```json
+> {
 >   "status": "COMPLETE",
->   "resultUrl": "/image-to-image/634b520c0ad332e179b5899e1f9b842f",
->   "images": [
->     {
->       "progress": 1,
->       "url": "/inpaint-image/634b520c0ad332e179b5899e1f9b842f/1.png"
->     },
->     {
->       "progress": 1,
->       "url": "/inpaint-image/634b520c0ad332e179b5899e1f9b842f/2.png"
->     },
->     {
->       "progress": 1,
->       "url": "/inpaint-image/634b520c0ad332e179b5899e1f9b842f/3.png"
->     }
+>   "resultUrl": "/image-to-image/ab1104f3b55fbab7779cdbdc73ed276e",
+>   "imageUrls": [
+>     "/image-to-image/ab1104f3b55fbab7779cdbdc73ed276e/1.png",
+>     "/image-to-image/ab1104f3b55fbab7779cdbdc73ed276e/2.png"
+>     "/image-to-image/ab1104f3b55fbab7779cdbdc73ed276e/3.png"
 >   ]
 > }
 > ```
 
-### Inpaint image
+### Inpaint Image
 
 #### `POST` `/inpaint-image`
 
@@ -233,34 +246,37 @@ curl https://0.0.0.0:8888/inpaint-image \
 >
 > ```json
 > {
->   "status": "IN_PROGRESS",
->   "resultUrl": "/inpaint-image/3dddcde9d8170b9a49729dbf27623bb7",
->   "images": [
->     {
->       "progress": 0.45,
->       "url": "/inpaint-image/3dddcde9d8170b9a49729dbf27623bb7/1.png"
->     }
->   ]
+>   "status": "QUEUED",
+>   "resultUrl": "/inpaint-image/59a89dfc9f075942ce9afc08312b8296"
 > }
 > ```
 
 #### `GET` `/inpaint-image/<ID>`
 
 ```sh
-curl https://0.0.0.0:8888/inpaint-image/3dddcde9d8170b9a49729dbf27623bb7
+curl https://0.0.0.0:8888/inpaint-image/59a89dfc9f075942ce9afc08312b8296
 ```
 
 > *Sample response*
 >
 > ```json
 > {
+>   "status": "IN_PROGRESS",
+>   "resultUrl": "/inpaint-image/59a89dfc9f075942ce9afc08312b8296",
+>   "progress": {
+>     "totalImages": 1,
+>     "currentImageIndex": 1,
+>     "currentImageProgress": 0.5
+>   },
+>   "imageUrls": []
+> }
+>
+> ```json
+> {
 >   "status": "COMPLETE",
->   "resultUrl": "/inpaint-image/3dddcde9d8170b9a49729dbf27623bb7",
->   "images": [
->     {
->       "progress": 1,
->       "url": "/inpaint-image/3dddcde9d8170b9a49729dbf27623bb7/1.png"
->     }
+>   "resultUrl": "/inpaint-image/59a89dfc9f075942ce9afc08312b8296",
+>   "imageUrls": [
+>     "/inpaint-image/59a89dfc9f075942ce9afc08312b8296/1.png",
 >   ]
 > }
 > ```

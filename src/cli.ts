@@ -3,12 +3,12 @@ import sade from 'sade'
 
 import {
   DEFAULT_CERT_FILE_PATH,
-  DEFAULT_INPAINT_IMAGE_MODEL_FILE_PATH,
   DEFAULT_KEY_FILE_PATH,
+  DEFAULT_MODEL_FILE_PATH_INPAINT_IMAGE,
+  DEFAULT_MODEL_FILE_PATH_TEXT_TO_IMAGE,
   DEFAULT_OUTPUT_DIRECTORY_PATH,
   DEFAULT_PORT,
-  DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH,
-  DEFAULT_TEXT_TO_IMAGE_MODEL_FILE_PATH
+  DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH
 } from './utilities/constants.js'
 import { serveAsync } from './utilities/serve-async.js'
 
@@ -16,12 +16,12 @@ sade('stable-diffusion-rest-api', true)
   .option(
     '--text-to-image-model',
     'Path to the text-to-image model checkpoint',
-    DEFAULT_TEXT_TO_IMAGE_MODEL_FILE_PATH
+    DEFAULT_MODEL_FILE_PATH_TEXT_TO_IMAGE
   )
   .option(
     '--inpaint-image-model',
     'Path to the inpaint image model checkpoint',
-    DEFAULT_INPAINT_IMAGE_MODEL_FILE_PATH
+    DEFAULT_MODEL_FILE_PATH_INPAINT_IMAGE
   )
   .option(
     '--repository',

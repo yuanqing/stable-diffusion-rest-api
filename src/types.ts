@@ -1,16 +1,26 @@
-export type RestApiResponse = {
-  status: 'QUEUED' | 'IN_PROGRESS' | 'COMPLETE'
+type BaseRestApiResponse = {
   resultUrl: string
-  images: Array<{
-    url: string
-    progress: number
-  }>
 }
-
+export type RestApiResponse =
+  | QueuedResponse
+  | InProgressResponse
+  | CompleteResponse
+export type QueuedResponse = BaseRestApiResponse & {
+  status: 'QUEUED'
+}
+export type InProgressResponse = BaseRestApiResponse & {
+  status: 'IN_PROGRESS'
+  progress: Progress
+  imageUrls: Array<string>
+}
+export type CompleteResponse = BaseRestApiResponse & {
+  status: 'COMPLETE'
+  imageUrls: Array<string>
+}
 export type Progress = {
-  currentSample: number
-  progress: number
-  totalSamples: number
+  currentImageIndex: number
+  currentImageProgress: number
+  totalImages: number
 }
 
 export type BaseOptions = {
@@ -19,7 +29,6 @@ export type BaseOptions = {
   seed?: number
   stableDiffusionRepositoryDirectoryPath?: string
 }
-
 export type TextToImageOptions = BaseOptions & {
   batchSize?: number
   eta?: number
@@ -31,7 +40,6 @@ export type TextToImageOptions = BaseOptions & {
   height?: number
   width?: number
 }
-
 export type ImageToImageOptions = BaseOptions & {
   strength?: number
   batchSize?: number
@@ -40,11 +48,6 @@ export type ImageToImageOptions = BaseOptions & {
   iterations?: number
   steps?: number
 }
-
-export type InpaintImageOptions = {
-  modelFilePath?: string
-  outputDirectoryPath?: string
-  seed?: number
-  stableDiffusionRepositoryDirectoryPath?: string
+export type InpaintImageOptions = BaseOptions & {
   steps?: number
 }

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <title>Inpaint Image</title>
   <style>
     :root { color-scheme: light dark; }
     * { font: 20px/24px monospace; }
@@ -23,16 +24,19 @@
     <input type="hidden" name="seed" value="42">
     <input type="submit" value="Inpaint Image">
   </form>
-  <div class="results"></div>
+  <hr />
+  <div></div>
   <script>
     const BASE_URL = 'https://0.0.0.0:8888'
 
     const formElement = document.querySelector('form')
-    const progressElement = document.querySelector('.progress')
-    const resultsElement = document.querySelector('.results')
+    const resultsElement = document.querySelector('div')
 
     async function handleFormSubmit(event) {
-      event.submitter.setAttribute('disabled', true)
+      const buttonElement = event.submitter
+      const buttonText = buttonElement.value
+      buttonElement.value = 'Generating…'
+      buttonElement.setAttribute('disabled', true)
       resultsElement.innerHTML = ''
       event.preventDefault()
       const formData = new FormData(event.target)
@@ -46,16 +50,25 @@
         const response = await fetch(`${BASE_URL}${resultUrl}`, {
           method: 'GET'
         })
-        const { images, status } = await response.json()
-        for (const { progress, url } of images) {
-          if (progress === 1 && renderedImageUrls[url] !== true) {
-            createImageElementAsync(`${BASE_URL}${url}`, resultsElement)
-            renderedImageUrls[url] = true
+        const result = await response.json()
+        if (result.status === 'QUEUED') {
+          return
+        }
+        const { progress, images } = result
+        if (result.status === 'IN_PROGRESS') {
+          buttonElement.value = `Generating image (${progress.currentImageProgress * 100}%)`
+        }
+        for (const imageUrl of images) {
+          if (renderedImageUrls[imageUrl] !== true) {
+            createImageElementAsync(`${BASE_URL}${imageUrl}`, resultsElement)
+            renderedImageUrls[imageUrl] = true
           }
         }
-        if (status === 'COMPLETE') {
+        if (result.status === 'COMPLETE') {
           clearInterval(intervalId)
-          event.submitter.removeAttribute('disabled')
+          buttonElement.removeAttribute('disabled')
+          buttonElement.value = buttonText
+          return
         }
       }, 1000)
     }

@@ -1,5 +1,4 @@
 import fs from 'fs-extra'
-import mem from 'mem'
 import { spawn } from 'node:child_process'
 import EventEmitter from 'node:events'
 import { join, resolve } from 'node:path'
@@ -8,8 +7,8 @@ import { snakeCase } from 'snake-case'
 
 import { Progress } from '../types.js'
 
-const POLL_INTERVAL = 200
-const LOG_PREFIX = /Sampling:/
+const POLLING_INTERVAL = 200
+const LOG_PREFIX_REGEX = /Sampling:/
 
 export function executeStableDiffusionScript(options: {
   modelFilePath: string
@@ -49,21 +48,10 @@ export function executeStableDiffusionScript(options: {
     outputDirectoryPath: outputDirectoryAbsolutePath
   })}`
 
-  const emitProgress = mem(
-    function (progress: Progress) {
-      eventEmitter.emit('progress', progress)
-    },
-    {
-      cacheKey: function ([{ currentSample, progress, totalSamples }]: [
-        Progress
-      ]) {
-        return `${currentSample}/${totalSamples}}-${progress.toFixed(2)}`
-      }
-    }
-  )
-
-  let currentSample = -1
-  let totalSamples = -1
+  let emitProgress:
+    | null
+    | ((currentImageIndex: number, currentImageProgress: number) => void) = null
+  let currentImageIndex: null | number = -1
 
   const stderr: Array<string> = []
 
@@ -72,7 +60,7 @@ export function executeStableDiffusionScript(options: {
     const lines = data.toString().split('\n')
     for (const line of lines) {
       stderr.push(line)
-      if (LOG_PREFIX.test(line) === true) {
+      if (LOG_PREFIX_REGEX.test(line) === true) {
         const split = line.split('|')
         const matches = split[2].trim().match(/^(\d+)\/(\d+)/)
         if (matches === null) {
@@ -81,22 +69,21 @@ export function executeStableDiffusionScript(options: {
         if (matches[1] === matches[2]) {
           continue
         }
-        currentSample = parseInt(matches[1], 10) + 1
-        if (totalSamples === -1) {
-          totalSamples = parseInt(matches[2], 10)
+        currentImageIndex = parseInt(matches[1], 10) + 1
+        if (emitProgress === null) {
+          const totalImages = parseInt(matches[2], 10)
+          emitProgress = emitProgressFactory(
+            totalImages,
+            function (progress: Progress) {
+              eventEmitter.emit('progress', progress)
+            }
+          )
         }
-        emitProgress({ currentSample, progress: 0, totalSamples })
+        emitProgress(currentImageIndex, 0)
       }
       if (/(Sampler|Decoding image):/.test(line) === true) {
-        if (currentSample === -1) {
-          eventEmitter.emit(
-            'error',
-            new Error('`currentSample` is `undefined`')
-          )
-          return
-        }
-        if (totalSamples === -1) {
-          eventEmitter.emit('error', new Error('`totalSamples` is `undefined`'))
+        if (currentImageIndex === null) {
+          eventEmitter.emit('error', new Error('`currentImageIndex` is `null`'))
           return
         }
         const split = line.split('|')
@@ -104,23 +91,29 @@ export function executeStableDiffusionScript(options: {
         if (matches === null) {
           continue
         }
-        const progress = parseInt(matches[1], 10) / 100
-        ;(async function ({ currentSample, totalSamples, progress }: Progress) {
-          if (progress === 1) {
-            // Ensure that image file exists on disk before updating the status
+        const currentImageProgress = parseInt(matches[1], 10) / 100
+        ;(async function (
+          currentImageIndex: number,
+          currentImageProgress: number
+        ) {
+          if (emitProgress === null) {
+            throw new Error('`emitProgress` is null')
+          }
+          if (currentImageProgress === 1) {
+            // Ensure that image file exists on disk
             const outputImageAbsolutePath = join(
               outputDirectoryAbsolutePath,
-              `${currentSample}.png`
+              `${currentImageIndex}.png`
             )
             await pWaitFor(
               function () {
                 return fs.pathExists(outputImageAbsolutePath)
               },
-              { interval: POLL_INTERVAL }
+              { interval: POLLING_INTERVAL }
             )
           }
-          emitProgress({ currentSample, progress, totalSamples })
-        })({ currentSample, progress, totalSamples })
+          emitProgress(currentImageIndex, currentImageProgress)
+        })(currentImageIndex, currentImageProgress)
       }
     }
   })
@@ -157,4 +150,47 @@ function createScriptArgs(args: Record<string, boolean | string | number>) {
     }
   }
   return result.join(' ')
+}
+
+function emitProgressFactory(
+  totalImages: number,
+  emitProgress: (progress: Progress) => void
+) {
+  let index = 1
+  const seen: Record<string, true> = {}
+  let backlog: Array<{
+    currentImageIndex: number
+    currentImageProgress: number
+  }> = []
+  return function (currentImageIndex: number, currentImageProgress: number) {
+    const key = `${currentImageIndex}-${currentImageProgress}`
+    if (seen[key] === true) {
+      return
+    }
+    seen[key] = true
+    if (currentImageIndex === index) {
+      emitProgress({ currentImageIndex, currentImageProgress, totalImages })
+      if (currentImageProgress !== 1) {
+        return
+      }
+      if (backlog.length > 0) {
+        backlog.sort(function (x, y) {
+          if (x.currentImageIndex !== y.currentImageIndex) {
+            return x.currentImageIndex - y.currentImageIndex
+          }
+          return x.currentImageProgress - y.currentImageProgress
+        })
+        for (const { currentImageIndex, currentImageProgress } of backlog) {
+          emitProgress({ currentImageIndex, currentImageProgress, totalImages })
+          seen[key] = true
+        }
+        backlog = []
+      }
+      index += 1
+      return
+    }
+    if (currentImageIndex > index) {
+      backlog.push({ currentImageIndex, currentImageProgress })
+    }
+  }
 }

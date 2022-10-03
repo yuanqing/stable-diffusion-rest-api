@@ -46,10 +46,10 @@ export async function serveAsync(options: {
     stableDiffusionRepositoryDirectoryPath
   } = options
 
-  const statusDatabase = createDatabase(join(outputDirectoryPath, '.database'))
+  const db = createDatabase(join(outputDirectoryPath, '.database'))
 
   if (deleteIncomplete === true) {
-    await statusDatabase.deleteIncompleteAsync()
+    await db.deleteIncompleteJobsAsync()
   }
 
   async function run(options: {
@@ -60,26 +60,24 @@ export async function serveAsync(options: {
   }): Promise<void> {
     const { execute, id, res, req } = options
     const logPrefix = `${yellow(req.path)} ${gray(id)}`
-    const result = await statusDatabase.getStatusAsync(req.path, id)
+    const result = await db.getJobAsync(req.path, id)
     if (result === null) {
-      await statusDatabase.setStatusToQueuedAsync(req.path, id)
+      await db.setStatusToQueuedAsync(req.path, id)
       const eventEmitter = execute()
       log.info(logPrefix)
       eventEmitter.on(
         'progress',
         async function (progress: Progress): Promise<void> {
-          await statusDatabase.setStatusToInProgressAsync(
-            req.path,
-            id,
-            progress
+          await db.setStatusToInProgressAsync(req.path, id, progress)
+          const progressBars = Array(
+            Math.round(progress.currentImageProgress * 10)
           )
-          const progressBars = Array(Math.round(progress.progress * 10))
             .fill('█')
             .join('')
           log.info(
-            `${logPrefix} ${progress.currentSample}/${
-              progress.totalSamples
-            } ${`${Math.trunc(progress.progress * 100)}`.padStart(
+            `${logPrefix} ${progress.currentImageIndex}/${
+              progress.totalImages
+            } ${`${Math.trunc(progress.currentImageProgress * 100)}`.padStart(
               3,
               ' '
             )}% ${progressBars}`
@@ -87,7 +85,7 @@ export async function serveAsync(options: {
         }
       )
       eventEmitter.on('done', async function (): Promise<void> {
-        await statusDatabase.setStatusToDoneAsync(req.path, id)
+        await db.setStatusToDoneAsync(req.path, id)
         log.success(logPrefix)
       })
     }
@@ -129,7 +127,7 @@ export async function serveAsync(options: {
             ...rest
           })
         },
-        id: createId(req.body),
+        id,
         req,
         res
       })
@@ -223,10 +221,7 @@ export async function serveAsync(options: {
   app.get(
     '/:type(text-to-image|image-to-image|inpaint-image)/:id',
     async function (req, res, next): Promise<void> {
-      const result = await statusDatabase.getStatusAsync(
-        `/${req.params.type}`,
-        req.params.id
-      )
+      const result = await db.getJobAsync(`/${req.params.type}`, req.params.id)
       if (result === null) {
         next()
         return

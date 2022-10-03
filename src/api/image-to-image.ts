@@ -4,10 +4,16 @@ import { fileURLToPath } from 'node:url'
 
 import { ImageToImageOptions } from '../types.js'
 import {
+  DEFAULT_BATCH_SIZE,
+  DEFAULT_ETA,
+  DEFAULT_GUIDANCE_SCALE,
+  DEFAULT_ITERATIONS,
+  DEFAULT_MODEL_FILE_PATH_TEXT_TO_IMAGE,
   DEFAULT_OUTPUT_DIRECTORY_PATH,
   DEFAULT_SEED,
   DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH,
-  DEFAULT_TEXT_TO_IMAGE_MODEL_FILE_PATH
+  DEFAULT_STEPS_IMAGE_TO_IMAGE,
+  DEFAULT_STRENGTH
 } from '../utilities/constants.js'
 import { executeStableDiffusionScript } from '../utilities/execute-stable-diffusion-script.js'
 
@@ -48,17 +54,22 @@ function parseImageToImageOptions(
   options: ImageToImageOptions
 ): Required<ImageToImageOptions> {
   return {
-    batchSize: typeof options.batchSize === 'undefined' ? 1 : options.batchSize,
-    eta: typeof options.eta === 'undefined' ? 0 : options.eta,
+    batchSize:
+      typeof options.batchSize === 'undefined'
+        ? DEFAULT_BATCH_SIZE
+        : options.batchSize,
+    eta: typeof options.eta === 'undefined' ? DEFAULT_ETA : options.eta,
     guidanceScale:
       typeof options.guidanceScale === 'undefined'
-        ? 7.5
+        ? DEFAULT_GUIDANCE_SCALE
         : options.guidanceScale,
     iterations:
-      typeof options.iterations === 'undefined' ? 1 : options.iterations,
+      typeof options.iterations === 'undefined'
+        ? DEFAULT_ITERATIONS
+        : options.iterations,
     modelFilePath:
       typeof options.modelFilePath === 'undefined'
-        ? DEFAULT_TEXT_TO_IMAGE_MODEL_FILE_PATH
+        ? DEFAULT_MODEL_FILE_PATH_TEXT_TO_IMAGE
         : options.modelFilePath,
     outputDirectoryPath:
       typeof options.outputDirectoryPath === 'undefined'
@@ -69,7 +80,13 @@ function parseImageToImageOptions(
       typeof options.stableDiffusionRepositoryDirectoryPath === 'undefined'
         ? DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH
         : options.stableDiffusionRepositoryDirectoryPath,
-    steps: typeof options.steps === 'undefined' ? 24 : options.steps,
-    strength: typeof options.strength === 'undefined' ? 0.75 : options.strength
+    steps:
+      typeof options.steps === 'undefined'
+        ? DEFAULT_STEPS_IMAGE_TO_IMAGE
+        : options.steps,
+    strength:
+      typeof options.strength === 'undefined'
+        ? DEFAULT_STRENGTH
+        : options.strength
   }
 }
