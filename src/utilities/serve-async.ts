@@ -6,6 +6,7 @@ import multer from 'multer'
 import { EventEmitter } from 'node:events'
 import https from 'node:https'
 import { join } from 'node:path'
+import PQueue from 'p-queue'
 import tempDir from 'temp-dir'
 
 import { imageToImage } from '../api/image-to-image.js'
@@ -25,8 +26,11 @@ import { log } from './log.js'
 
 export type ConfigOptionKeys = keyof Omit<BaseOptions, 'seed'>
 
+const DATABASE_DIRECTORY_NAME = '.database'
+
 export async function serveAsync(options: {
   certFilePath: string
+  concurrency: number
   deleteIncomplete: boolean
   inpaintImageModelFilePath: string
   keyFilePath: string
@@ -37,6 +41,7 @@ export async function serveAsync(options: {
 }): Promise<void> {
   const {
     certFilePath,
+    concurrency,
     deleteIncomplete,
     inpaintImageModelFilePath,
     keyFilePath,
@@ -46,7 +51,9 @@ export async function serveAsync(options: {
     stableDiffusionRepositoryDirectoryPath
   } = options
 
-  const db = createDatabase(join(outputDirectoryPath, '.database'))
+  const db = createDatabase(join(outputDirectoryPath, DATABASE_DIRECTORY_NAME))
+
+  const queue = new PQueue({ concurrency })
 
   if (deleteIncomplete === true) {
     await db.deleteIncompleteJobsAsync()
@@ -59,34 +66,39 @@ export async function serveAsync(options: {
     req: { path: string }
   }): Promise<void> {
     const { execute, id, res, req } = options
-    const logPrefix = `${yellow(req.path)} ${gray(id)}`
-    const result = await db.getJobAsync(req.path, id)
+    const logPrefix = `${yellow(req.path.padEnd(15, ' '))} ${gray(id)}`
+    const result = await db.getJobStatusAsync(req.path, id)
     if (result === null) {
-      await db.setStatusToQueuedAsync(req.path, id)
-      const eventEmitter = execute()
-      log.info(logPrefix)
-      eventEmitter.on(
-        'progress',
-        async function (progress: Progress): Promise<void> {
-          await db.setStatusToInProgressAsync(req.path, id, progress)
-          const progressBars = Array(
-            Math.round(progress.currentImageProgress * 10)
+      await db.setJobStatusToQueuedAsync(req.path, id)
+      log.info(`${logPrefix} Queued...`)
+      queue.add(function () {
+        return new Promise<void>(function (resolve: () => void) {
+          log.info(`${logPrefix} Starting...`)
+          const eventEmitter = execute()
+          eventEmitter.on(
+            'progress',
+            async function (progress: Progress): Promise<void> {
+              await db.setJobStatusToInProgressAsync(req.path, id, progress)
+              const progressBars = Array(
+                Math.round(progress.currentImageProgress * 10)
+              )
+                .fill('█')
+                .join('')
+              log.info(
+                `${logPrefix} ${progress.currentImageIndex}/${
+                  progress.totalImages
+                } ${`${Math.trunc(
+                  progress.currentImageProgress * 100
+                )}`.padStart(3, ' ')}% ${progressBars}`
+              )
+            }
           )
-            .fill('█')
-            .join('')
-          log.info(
-            `${logPrefix} ${progress.currentImageIndex}/${
-              progress.totalImages
-            } ${`${Math.trunc(progress.currentImageProgress * 100)}`.padStart(
-              3,
-              ' '
-            )}% ${progressBars}`
-          )
-        }
-      )
-      eventEmitter.on('done', async function (): Promise<void> {
-        await db.setStatusToDoneAsync(req.path, id)
-        log.success(logPrefix)
+          eventEmitter.on('done', async function (): Promise<void> {
+            await db.setJobStatusToDoneAsync(req.path, id)
+            log.success(`${logPrefix} Done`)
+            resolve()
+          })
+        })
       })
     }
     res.redirect(`${req.path}/${id}`)
@@ -221,7 +233,10 @@ export async function serveAsync(options: {
   app.get(
     '/:type(text-to-image|image-to-image|inpaint-image)/:id',
     async function (req, res, next): Promise<void> {
-      const result = await db.getJobAsync(`/${req.params.type}`, req.params.id)
+      const result = await db.getJobStatusAsync(
+        `/${req.params.type}`,
+        req.params.id
+      )
       if (result === null) {
         next()
         return

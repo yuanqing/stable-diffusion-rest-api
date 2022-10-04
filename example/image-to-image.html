@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Image-to-Image</title>
+  <title>Image to Image</title>
   <style>
     :root { color-scheme: light dark; }
     * { font: 20px/24px monospace; }
@@ -23,7 +23,7 @@
     <input type="hidden" name="iterations" value="3">
     <input type="hidden" name="steps" value="24">
     <input type="hidden" name="seed" value="42">
-    <input type="submit" value="Image-to-Image">
+    <input type="submit" value="Image to Image">
   </form>
   <hr />
   <div></div>
@@ -36,7 +36,6 @@
     async function handleFormSubmit(event) {
       const buttonElement = event.submitter
       const buttonText = buttonElement.value
-      buttonElement.value = 'Generating…'
       buttonElement.setAttribute('disabled', true)
       resultsElement.innerHTML = ''
       event.preventDefault()
@@ -53,6 +52,7 @@
         })
         const result = await response.json()
         if (result.status === 'QUEUED') {
+          buttonElement.value = 'Queued…'
           return
         }
         const { progress, imageUrls } = result

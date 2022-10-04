@@ -10,14 +10,17 @@ import {
 
 export type Database = {
   deleteIncompleteJobsAsync: () => Promise<void>
-  getJobAsync: (type: string, id: string) => Promise<null | RestApiResponse>
-  setStatusToQueuedAsync: (type: string, id: string) => Promise<void>
-  setStatusToInProgressAsync: (
+  getJobStatusAsync: (
+    type: string,
+    id: string
+  ) => Promise<null | RestApiResponse>
+  setJobStatusToQueuedAsync: (type: string, id: string) => Promise<void>
+  setJobStatusToInProgressAsync: (
     type: string,
     id: string,
     progress: Progress
   ) => Promise<void>
-  setStatusToDoneAsync: (type: string, id: string) => Promise<void>
+  setJobStatusToDoneAsync: (type: string, id: string) => Promise<void>
 }
 
 const levelDbOptions = { valueEncoding: 'json' }
@@ -37,7 +40,7 @@ export function createDatabase(directoryPath: string): Database {
     db.batch(deleteOperations)
   }
 
-  async function getStatusAsync(
+  async function getJobStatusAsync(
     type: string,
     id: string
   ): Promise<null | RestApiResponse> {
@@ -50,11 +53,11 @@ export function createDatabase(directoryPath: string): Database {
     }
   }
 
-  async function setStatusToQueuedAsync(
+  async function setJobStatusToQueuedAsync(
     type: string,
     id: string
   ): Promise<void> {
-    const result: null | RestApiResponse = await getStatusAsync(type, id)
+    const result: null | RestApiResponse = await getJobStatusAsync(type, id)
     if (result !== null) {
       throw new Error('`result` must be `null`')
     }
@@ -66,12 +69,12 @@ export function createDatabase(directoryPath: string): Database {
     return db.put(key, value, levelDbOptions)
   }
 
-  async function setStatusToInProgressAsync(
+  async function setJobStatusToInProgressAsync(
     type: string,
     id: string,
     progress: Progress
   ): Promise<void> {
-    const result: null | RestApiResponse = await getStatusAsync(type, id)
+    const result: null | RestApiResponse = await getJobStatusAsync(type, id)
     if (result === null) {
       throw new Error('`result` is `null`')
     }
@@ -98,8 +101,11 @@ export function createDatabase(directoryPath: string): Database {
     return db.put(key, value, levelDbOptions)
   }
 
-  async function setStatusToDoneAsync(type: string, id: string): Promise<void> {
-    const result: null | RestApiResponse = await getStatusAsync(type, id)
+  async function setJobStatusToDoneAsync(
+    type: string,
+    id: string
+  ): Promise<void> {
+    const result: null | RestApiResponse = await getJobStatusAsync(type, id)
     if (result === null) {
       throw new Error('`result` is `null`')
     }
@@ -117,10 +123,10 @@ export function createDatabase(directoryPath: string): Database {
 
   return {
     deleteIncompleteJobsAsync,
-    getJobAsync: getStatusAsync,
-    setStatusToDoneAsync,
-    setStatusToInProgressAsync,
-    setStatusToQueuedAsync
+    getJobStatusAsync,
+    setJobStatusToDoneAsync,
+    setJobStatusToInProgressAsync,
+    setJobStatusToQueuedAsync
   }
 }
 

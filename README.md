@@ -59,12 +59,33 @@ mkcert -cert-file cert.pem -key-file key.pem 0.0.0.0
 
 ## Usage
 
+```
+
+  Usage
+    $ stable-diffusion-rest-api [options]
+
+  Options
+    --text-to-image-model    Path to the text-to-image model checkpoint  (default ./models/text-to-image.ckpt)
+    --inpaint-image-model    Path to the inpaint image model checkpoint  (default ./models/inpaint-image.ckpt)
+    --concurrency            Number of concurrent image generation tasks  (default 1)
+    --output                 Directory to output generated images  (default ./output)
+    --cert                   Path to the SSL certicate  (default ./cert.pem)
+    --key                    Path to the SSL certicate key  (default ./key.pem)
+    --delete-incomplete      Delete all incomplete image generation tasks before starting the server  (default false)
+    --port                   Port to serve the REST API  (default 8888)
+    --repository             Path to the Stable Diffusion repository  (default ./stable-diffusion)
+    -v, --version            Displays current version
+    -h, --help               Displays this message
+
+```
+
 Start the API server:
 
 ```sh
 npx --yes -- stable-diffusion-rest-api \
   --text-to-image-model ./models/text-to-image.ckpt \
   --inpaint-image-model ./models/inpaint-image.ckpt \
+  --concurrency 1 \
   --output ./output \
   --cert ./cert.pem \
   --key ./key.pem \
@@ -111,7 +132,7 @@ All REST API endpoints return JSON with one of the following shapes, depending o
   - `totalImages` is the total number of images to be generated
 - **`imageUrls`** is the list of URLs of the generated images
 
-### Text-to-Image
+### Text to Image
 
 #### `POST` `/text-to-image`
 
@@ -170,7 +191,7 @@ curl https://0.0.0.0:8888/text-to-image/61f957e4462ea8eff36d9e7a7b650994
 > }
 > ```
 
-### Image-to-Image
+### Image to Image
 
 #### `POST` `/image-to-image`
 

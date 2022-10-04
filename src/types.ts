@@ -10,8 +10,8 @@ export type QueuedResponse = BaseRestApiResponse & {
 }
 export type InProgressResponse = BaseRestApiResponse & {
   status: 'IN_PROGRESS'
-  progress: Progress
   imageUrls: Array<string>
+  progress: Progress
 }
 export type CompleteResponse = BaseRestApiResponse & {
   status: 'COMPLETE'

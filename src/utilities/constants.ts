@@ -1,6 +1,7 @@
 export const DEFAULT_BATCH_SIZE = 1
 export const DEFAULT_CERT_FILE_PATH = './cert.pem'
 export const DEFAULT_CHANNELS = 4
+export const DEFAULT_CONCURRENCY = 1
 export const DEFAULT_DOWNSAMPLING_FACTOR = 8
 export const DEFAULT_ETA = 0
 export const DEFAULT_GUIDANCE_SCALE = 7.5

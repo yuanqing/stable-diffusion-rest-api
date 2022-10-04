@@ -3,6 +3,7 @@ import sade from 'sade'
 
 import {
   DEFAULT_CERT_FILE_PATH,
+  DEFAULT_CONCURRENCY,
   DEFAULT_KEY_FILE_PATH,
   DEFAULT_MODEL_FILE_PATH_INPAINT_IMAGE,
   DEFAULT_MODEL_FILE_PATH_TEXT_TO_IMAGE,
@@ -24,9 +25,9 @@ sade('stable-diffusion-rest-api', true)
     DEFAULT_MODEL_FILE_PATH_INPAINT_IMAGE
   )
   .option(
-    '--repository',
-    'Path to the Stable Diffusion repository',
-    DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH
+    '--concurrency',
+    'Number of concurrent image generation tasks',
+    DEFAULT_CONCURRENCY
   )
   .option(
     '--output',
@@ -35,14 +36,20 @@ sade('stable-diffusion-rest-api', true)
   )
   .option('--cert', 'Path to the SSL certicate', DEFAULT_CERT_FILE_PATH)
   .option('--key', 'Path to the SSL certicate key', DEFAULT_KEY_FILE_PATH)
-  .option('--port', 'Port to serve the REST API', DEFAULT_PORT)
   .option(
     '--delete-incomplete',
     'Delete all incomplete image generation tasks before starting the server',
     false
   )
+  .option('--port', 'Port to serve the REST API', DEFAULT_PORT)
+  .option(
+    '--repository',
+    'Path to the Stable Diffusion repository',
+    DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH
+  )
   .action(async function (options: {
     'cert': string
+    'concurrency': number
     'delete-incomplete': boolean
     'inpaint-image-model': string
     'key': string
@@ -53,6 +60,7 @@ sade('stable-diffusion-rest-api', true)
   }) {
     await serveAsync({
       certFilePath: options['cert'],
+      concurrency: options['concurrency'],
       deleteIncomplete: options['delete-incomplete'],
       inpaintImageModelFilePath: options['inpaint-image-model'],
       keyFilePath: options['key'],

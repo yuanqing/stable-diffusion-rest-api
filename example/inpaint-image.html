@@ -35,7 +35,6 @@
     async function handleFormSubmit(event) {
       const buttonElement = event.submitter
       const buttonText = buttonElement.value
-      buttonElement.value = 'Generating…'
       buttonElement.setAttribute('disabled', true)
       resultsElement.innerHTML = ''
       event.preventDefault()
@@ -52,13 +51,14 @@
         })
         const result = await response.json()
         if (result.status === 'QUEUED') {
+          buttonElement.value = 'Queued…'
           return
         }
-        const { progress, images } = result
+        const { progress, imageUrls } = result
         if (result.status === 'IN_PROGRESS') {
           buttonElement.value = `Generating image (${progress.currentImageProgress * 100}%)`
         }
-        for (const imageUrl of images) {
+        for (const imageUrl of imageUrls) {
           if (renderedImageUrls[imageUrl] !== true) {
             createImageElementAsync(`${BASE_URL}${imageUrl}`, resultsElement)
             renderedImageUrls[imageUrl] = true
