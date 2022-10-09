@@ -65,15 +65,16 @@ mkcert -cert-file cert.pem -key-file key.pem 0.0.0.0
     $ stable-diffusion-rest-api [options]
 
   Options
-    --text-to-image-model    Path to the text-to-image model checkpoint  (default ./models/text-to-image.ckpt)
-    --inpaint-image-model    Path to the inpaint image model checkpoint  (default ./models/inpaint-image.ckpt)
-    --concurrency            Number of concurrent image generation tasks  (default 1)
-    --output                 Directory to output generated images  (default ./output)
     --cert                   Path to the SSL certicate  (default ./cert.pem)
-    --key                    Path to the SSL certicate key  (default ./key.pem)
+    --concurrency            Number of concurrent image generation tasks  (default 1)
+    --cors                   Whether to enable CORS  (default true)
     --delete-incomplete      Delete all incomplete image generation tasks before starting the server  (default false)
+    --inpaint-image-model    Path to the inpaint image model checkpoint  (default ./models/inpaint-image.ckpt)
+    --key                    Path to the SSL certicate key  (default ./key.pem)
+    --output                 Directory to output generated images  (default ./output)
     --port                   Port to serve the REST API  (default 8888)
     --repository             Path to the Stable Diffusion repository  (default ./stable-diffusion)
+    --text-to-image-model    Path to the text-to-image model checkpoint  (default ./models/text-to-image.ckpt)
     -v, --version            Displays current version
     -h, --help               Displays this message
 
