@@ -21,6 +21,11 @@ sade('stable-diffusion-rest-api', true)
     DEFAULT_CONCURRENCY
   )
   .option(
+    '--cors',
+    'Whether to enable CORS',
+    true
+  )
+  .option(
     '--delete-incomplete',
     'Delete all incomplete image generation tasks before starting the server',
     false
@@ -50,6 +55,7 @@ sade('stable-diffusion-rest-api', true)
   .action(async function (options: {
     'cert': string
     'concurrency': number
+    'cors': boolean
     'delete-incomplete': boolean
     'inpaint-image-model': string
     'key': string
@@ -61,6 +67,7 @@ sade('stable-diffusion-rest-api', true)
     await serveAsync({
       certFilePath: options['cert'],
       concurrency: options['concurrency'],
+      cors: options['cors'],
       deleteIncomplete: options['delete-incomplete'],
       inpaintImageModelFilePath: options['inpaint-image-model'],
       keyFilePath: options['key'],

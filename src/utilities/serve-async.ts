@@ -31,6 +31,7 @@ const DATABASE_DIRECTORY_NAME = '.database'
 export async function serveAsync(options: {
   certFilePath: string
   concurrency: number
+  cors: boolean
   deleteIncomplete: boolean
   inpaintImageModelFilePath: string
   keyFilePath: string
@@ -106,7 +107,9 @@ export async function serveAsync(options: {
 
   const app = express()
 
-  app.use(cors())
+  if (options.cors === true) {
+    app.use(cors())
+  }
   app.use(express.json())
   app.use(express.urlencoded({ extended: true }))
 
