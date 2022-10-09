@@ -20,11 +20,7 @@ sade('stable-diffusion-rest-api', true)
     'Number of concurrent image generation tasks',
     DEFAULT_CONCURRENCY
   )
-  .option(
-    '--cors',
-    'Whether to enable CORS',
-    true
-  )
+  .option('--cors', 'Whether to enable CORS', true)
   .option(
     '--delete-incomplete',
     'Delete all incomplete image generation tasks before starting the server',
