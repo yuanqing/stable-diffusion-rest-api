@@ -36,7 +36,8 @@
     "fix": "eslint --fix '{scripts,src}/**/*.ts'",
     "lint": "eslint '{scripts,src}/**/*.ts'",
     "prepublishOnly": "npm run build",
-    "reset": "rimraf node_modules package-lock.json && npm install",
+    "reset": "rimraf node_modules package-lock.json && npm install && npm run simple-git-hooks",
+    "simple-git-hooks": "simple-git-hooks",
     "start": "node --loader ts-node/esm src/cli.js --delete-incomplete"
   },
   "dependencies": {
@@ -60,8 +61,10 @@
     "@types/multer": "^1.4.7",
     "eslint": "^8.23.0",
     "eslint-config-yuanqing": "^0.0.6",
+    "lint-staged": "^13.0.3",
     "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
+    "simple-git-hooks": "^2.8.0",
     "ts-node": "^10.9.1",
     "type-fest": "^3.0.0",
     "typescript": "^4.8.2"
@@ -69,5 +72,14 @@
   "eslintConfig": {
     "extends": "eslint-config-yuanqing"
   },
-  "prettier": "eslint-config-yuanqing/prettier"
+  "lint-staged": {
+    "*.ts": [
+      "eslint"
+    ]
+  },
+  "prettier": "eslint-config-yuanqing/prettier",
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged",
+    "pre-push": "npm run lint && npm run fix && npm run build"
+  }
 }
