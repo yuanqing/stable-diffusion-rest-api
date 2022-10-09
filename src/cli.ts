@@ -14,38 +14,38 @@ import {
 import { serveAsync } from './utilities/serve-async.js'
 
 sade('stable-diffusion-rest-api', true)
-  .option(
-    '--text-to-image-model',
-    'Path to the text-to-image model checkpoint',
-    DEFAULT_MODEL_FILE_PATH_TEXT_TO_IMAGE
-  )
-  .option(
-    '--inpaint-image-model',
-    'Path to the inpaint image model checkpoint',
-    DEFAULT_MODEL_FILE_PATH_INPAINT_IMAGE
-  )
+  .option('--cert', 'Path to the SSL certicate', DEFAULT_CERT_FILE_PATH)
   .option(
     '--concurrency',
     'Number of concurrent image generation tasks',
     DEFAULT_CONCURRENCY
   )
   .option(
-    '--output',
-    'Directory to output generated images',
-    DEFAULT_OUTPUT_DIRECTORY_PATH
-  )
-  .option('--cert', 'Path to the SSL certicate', DEFAULT_CERT_FILE_PATH)
-  .option('--key', 'Path to the SSL certicate key', DEFAULT_KEY_FILE_PATH)
-  .option(
     '--delete-incomplete',
     'Delete all incomplete image generation tasks before starting the server',
     false
+  )
+  .option(
+    '--inpaint-image-model',
+    'Path to the inpaint image model checkpoint',
+    DEFAULT_MODEL_FILE_PATH_INPAINT_IMAGE
+  )
+  .option('--key', 'Path to the SSL certicate key', DEFAULT_KEY_FILE_PATH)
+  .option(
+    '--output',
+    'Directory to output generated images',
+    DEFAULT_OUTPUT_DIRECTORY_PATH
   )
   .option('--port', 'Port to serve the REST API', DEFAULT_PORT)
   .option(
     '--repository',
     'Path to the Stable Diffusion repository',
     DEFAULT_STABLE_DIFFUSION_REPOSITORY_DIRECTORY_PATH
+  )
+  .option(
+    '--text-to-image-model',
+    'Path to the text-to-image model checkpoint',
+    DEFAULT_MODEL_FILE_PATH_TEXT_TO_IMAGE
   )
   .action(async function (options: {
     'cert': string
